@@ -12,25 +12,22 @@
     font-family:Arial, sans-serif; text-align:center;
     background:#fff;
     color:#222; flex-direction:column;
-    overflow: hidden;
-    touch-action: none;
+    overflow:hidden;
+    touch-action:none;
   }
   
-  #level1, #level2, #level3, #level4, #level5 {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+  #level1, #level2, #level3, #level4, #level5, #level6 {
+    position:absolute;
+    top:0; left:0;
+    width:100%; height:100%;
+    display:flex; justify-content:center; align-items:center;
+    flex-direction:column;
   }
   
-  #level3 { background: #00ff66; }
-  #level4 { background: #f0f0f0; }
-  #level5 { background: #fffae0; }
+  #level3 { background:#00ff66; }
+  #level4 { background:#f0f0f0; }
+  #level5 { background:#fffae0; }
+  #level6 { background:#cce7ff; }
 
   .hidden { display:none !important; }
   button {
@@ -45,19 +42,17 @@
   input {
     font-size:1.2rem; padding:10px;
     border-radius:10px; border:2px solid #333;
-    text-align:center; width:150px;
+    text-align:center; width:180px;
   }
   #logo {
     max-width:40%;
     height:auto;
   }
-  /* Level 2 rules styling */
-  #level2 p {
-    font-size:1.5rem; /* enlarged font */
-  }
-  /* Level 4 riddle styling */
-  #riddleText {
-    font-size:1rem; /* reduced font */
+  #level2 p { font-size:1.5rem; }
+  #riddleText { font-size:1rem; }
+  #level5 img {
+    max-width:80%; max-height:80%;
+    border-radius:20px; box-shadow:0 0 20px rgba(0,0,0,0.2);
   }
 </style>
 </head>
@@ -65,7 +60,7 @@
 
 <!-- Level 1 -->
 <div id="level1">
-  <img id="logo" src="https://i.imgur.com/LRZFEdJ.png" alt="Questify Logo">
+  <img id="logo" src="https://i.imgur.com/vl6pcuM.png" alt="Questify Logo">
   <button id="startBtn">Let's Start</button>
 </div>
 
@@ -97,7 +92,18 @@
 
 <!-- Level 5 -->
 <div id="level5" class="hidden">
-  <!-- Photo will be displayed here -->
+  <img id="level5Image" src="" alt="Level 5 Image">
+  <div style="margin-top:20px;">
+    <input id="secretInput" placeholder="Type the secret word..." />
+    <button id="checkSecret">Submit</button>
+  </div>
+  <p id="secretMessage" style="font-weight:bold;margin-top:10px;"></p>
+</div>
+
+<!-- Level 6 -->
+<div id="level6" class="hidden">
+  <h2>✅ You’ve reached Level 6!</h2>
+  <p>Well done, adventurer. The journey continues...</p>
 </div>
 
 <!-- EmailJS SDK -->
@@ -112,17 +118,28 @@ const l2 = document.getElementById("level2");
 const l3 = document.getElementById("level3");
 const l4 = document.getElementById("level4");
 const l5 = document.getElementById("level5");
+const l6 = document.getElementById("level6");
 const startBtn = document.getElementById("startBtn");
 const micBtn = document.getElementById("micBtn");
 const continueBtn = document.getElementById("continueBtn");
 const submitColor = document.getElementById("submitColor");
 const colorInput = document.getElementById("colorInput");
 const clapStatus = document.getElementById("clapStatus");
+const level5Image = document.getElementById("level5Image");
+const secretInput = document.getElementById("secretInput");
+const checkSecret = document.getElementById("checkSecret");
+const secretMessage = document.getElementById("secretMessage");
 
 let audioContext, micStream, analyser, dataArray;
 let animationFrameId;
 
 const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
+const level5Images = [
+  "https://i.imgur.com/wIANnSO.jpeg",
+  "https://i.imgur.com/SL7azLS.jpeg",
+  "https://i.imgur.com/ksgaCXU.jpeg",
+  "https://i.imgur.com/ZLkx3eu.jpeg"
+];
 
 // --- Email function ---
 function sendLevelEmail(levelNumber) {
@@ -131,7 +148,7 @@ function sendLevelEmail(levelNumber) {
     player: "Anonymous",
     date: new Date().toLocaleString()
   }).then(
-    response => console.log("Email sent for level " + levelNumber),
+    () => console.log("Email sent for level " + levelNumber),
     error => console.error("Email error:", error)
   );
 }
@@ -156,9 +173,8 @@ micBtn.onclick = async () => {
     micBtn.classList.add("hidden");
     continueBtn.classList.remove("hidden");
   } catch (err) {
-    console.warn("No microphone detected or access denied. Skipping mic activation.", err);
+    console.warn("No microphone detected or access denied.", err);
     alert("No microphone detected. You can continue without it.");
-    // Show continue button anyway
     micBtn.classList.add("hidden");
     continueBtn.classList.remove("hidden");
   }
@@ -174,7 +190,6 @@ continueBtn.onclick = () => {
 submitColor.onclick = () => {
   const guess = colorInput.value.trim().toLowerCase();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
-
   const isCorrect = allowedColors.some(c => c.replace('#','').toLowerCase() === normalized.replace('#',''));
   if (isCorrect) {
     l3.classList.add("hidden");
@@ -196,8 +211,8 @@ function startClapDetection() {
   let clapSequenceStartTime = 0;
   let clapsInSequence = 0;
 
-  const threshold = 0.25; // further reduced for easier detection
-  const spikeMultiplier = 2.2; 
+  const threshold = 0.25;
+  const spikeMultiplier = 2.2;
   let peakHistory = [];
 
   function detectClap() {
@@ -228,18 +243,9 @@ function startClapDetection() {
           clapStatus.textContent="👏 Clap detected!";
           cancelAnimationFrame(animationFrameId);
 
-          // Immediately go to Level 5 and show the photo
           l4.classList.add("hidden");
           l5.classList.remove("hidden");
-
-          const photoInLevel5 = document.createElement("div");
-          photoInLevel5.style.fontSize = "2rem";
-          photoInLevel5.style.fontWeight = "bold";
-          photoInLevel5.style.marginTop = "20px";
-          const hour = new Date().getHours();
-          photoInLevel5.textContent = "🖼 Hour: " + hour;
-          l5.appendChild(photoInLevel5);
-
+          updateLevel5Image();
           sendLevelEmail(5);
           return;
         } else {
@@ -261,6 +267,32 @@ function startClapDetection() {
 
   detectClap();
 }
+
+// --- Level 5: Image switching every 10 minutes ---
+function updateLevel5Image() {
+  const now = new Date();
+  const minute = now.getMinutes();
+  const index = Math.floor((minute % 40) / 10) % 4;
+  level5Image.src = level5Images[index];
+}
+setInterval(() => {
+  if (!l5.classList.contains("hidden")) updateLevel5Image();
+}, 60000);
+
+// --- Level 5 Secret Word ---
+checkSecret.onclick = () => {
+  const input = secretInput.value.trim().toLowerCase();
+  if (input === "continue") {
+    secretMessage.textContent = "✅ Correct! Moving to Level 6...";
+    setTimeout(() => {
+      l5.classList.add("hidden");
+      l6.classList.remove("hidden");
+      sendLevelEmail(6);
+    }, 1000);
+  } else {
+    secretMessage.textContent = "❌ Wrong word. Try again.";
+  }
+};
 </script>
 
 </body>
