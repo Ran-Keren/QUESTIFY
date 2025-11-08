@@ -26,7 +26,9 @@
     flex-direction: column;
   }
   
-  #level3 { background: #00ff66; }
+  #level3 { background: #e0ffe0; }
+  #level4 { background: #f0f0f0; }
+  #level5 { background: #fffae0; }
 
   .hidden { display:none !important; }
   button {
@@ -47,11 +49,13 @@
 </head>
 <body>
 
+<!-- Level 1 -->
 <div id="level1">
   <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
   <button id="startBtn">Let's Start</button>
 </div>
 
+<!-- Level 2 -->
 <div id="level2" class="hidden">
   <h2>Rules</h2>
   <p>1. You can use whatever you want.<br>
@@ -61,21 +65,24 @@
   <button id="continueBtn" class="hidden">Start</button>
 </div>
 
+<!-- Level 3 -->
 <div id="level3" class="hidden">
-  <input id="colorInput" type="text" placeholder="" />
+  <input id="colorInput" type="text" placeholder="Enter color hex..." />
   <button id="submitColor">Submit</button>
 </div>
 
+<!-- Level 4 -->
 <div id="level4" class="hidden">
   <h2 id="riddleText">
-    I abide in stillness, poised for the fleeting instant,<br>
-    Elation ripples through the unseen ether,<br>
+    I abide in stillness, poised for the fleeting instant, 
+    Elation ripples through the unseen ether, 
     Tribute and reverence choreograph the way
   </h2>
   <p id="clapStatus"></p>
   <div id="photoPlaceholder" style="margin-top:20px; font-size:2rem; font-weight:bold;"></div>
 </div>
 
+<!-- Level 5 -->
 <div id="level5" class="hidden">
   <h2>🎉 You passed the clap level!</h2>
 </div>
@@ -101,9 +108,11 @@ const clapStatus = document.getElementById("clapStatus");
 const photoPlaceholder = document.getElementById("photoPlaceholder");
 
 let audioContext, micStream, analyser, dataArray;
-const targetColor = '#00ff66'; 
 let animationFrameId;
 
+const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
+
+// --- Email function ---
 function sendLevelEmail(levelNumber) {
   emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
     level: levelNumber,
@@ -148,13 +157,17 @@ continueBtn.onclick = () => {
 
 // --- Level 3 ---
 submitColor.onclick = () => {
-  const guess = colorInput.value.trim();
+  const guess = colorInput.value.trim().toLowerCase();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
-  if (normalized.toLowerCase() === targetColor.toLowerCase()) {
+
+  const isCorrect = allowedColors.some(c => c.replace('#','').toLowerCase() === normalized.replace('#',''));
+  if (isCorrect) {
     l3.classList.add("hidden");
     l4.classList.remove("hidden");
-    sendLevelEmail(3); // send email after level 3
+    sendLevelEmail(3);
     startClapDetection();
+  } else {
+    alert("Try again!");
   }
 };
 
@@ -194,23 +207,22 @@ function startClapDetection() {
       if(clapsInSequence===0){
         clapsInSequence=1;
         clapSequenceStartTime=now;
-        // NO message for first clap
       } else if(clapsInSequence===1){
         if(now-clapSequenceStartTime<=doubleClapInterval){
           clapsInSequence=2;
           clapStatus.textContent="✅ Success!";
           cancelAnimationFrame(animationFrameId);
 
-          // Display the "photo" - rounded hour
+          // Display the "photo" - current hour
           const hour = new Date().getHours();
           photoPlaceholder.textContent = "🖼 Hour: " + hour;
 
-          sendLevelEmail(4); // send email after level 4 double clap
+          sendLevelEmail(4);
 
           setTimeout(()=>{
             l4.classList.add("hidden");
             l5.classList.remove("hidden");
-            sendLevelEmail(5); // send email after final level
+            sendLevelEmail(5);
           }, 1000);
           return;
         } else {
