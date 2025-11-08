@@ -26,7 +26,6 @@
     flex-direction: column;
   }
   
-  /* Level 3 fixed background */
   #level3 { background: #00ff66; }
   #level4 { background: #f0f0f0; }
   #level5 { background: #fffae0; }
@@ -46,13 +45,17 @@
     border-radius:10px; border:2px solid #333;
     text-align:center; width:150px;
   }
+  #logo {
+    max-width:60%;
+    height:auto;
+  }
 </style>
 </head>
 <body>
 
 <!-- Level 1 -->
 <div id="level1">
-  <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
+  <img id="logo" src="https://i.imgur.com/LRZFEdJ.png" alt="Questify Logo">
   <button id="startBtn">Let's Start</button>
 </div>
 
