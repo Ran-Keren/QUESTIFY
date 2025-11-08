@@ -27,6 +27,15 @@
     border-radius:10px; border:2px solid #333;
     text-align:center; width:150px;
   }
+  /* Make level 3 cover entire background */
+  #level3 {
+    position: absolute;
+    top:0; left:0; right:0; bottom:0;
+    background:#00ff66;
+    display:flex; justify-content:center; align-items:center;
+    flex-direction:column;
+    z-index:0;
+  }
 </style>
 </head>
 <body>
@@ -48,14 +57,14 @@
 </div>
 
 <!-- Level 3: Color input -->
-<div id="level3" class="hidden" style="background:#00ff66; flex-direction:column;">
+<div id="level3" class="hidden">
   <input id="colorInput" type="text" placeholder="" />
   <button id="submitColor">Submit</button>
 </div>
 
 <!-- Level 4: Clap detection -->
 <div id="level4" class="hidden">
-  <h2>👏 Clap to continue...</h2>
+  <h2>👏 Double tap (clap) to continue...</h2>
   <p id="clapStatus"></p>
 </div>
 
@@ -79,7 +88,6 @@ const clapStatus = document.getElementById("clapStatus");
 
 let audioContext, micStream, analyser, dataArray;
 const targetColor = '#00ff66';
-let clapCount = 0;
 
 // --- Level 1 ---
 startBtn.onclick = () => {
@@ -98,7 +106,6 @@ micBtn.onclick = async () => {
     dataArray = new Uint8Array(analyser.fftSize);
     source.connect(analyser);
 
-    // Hide mic button, show Start button
     micBtn.classList.add("hidden");
     continueBtn.classList.remove("hidden");
   } catch (err) {
@@ -125,34 +132,32 @@ submitColor.onclick = () => {
   }
 };
 
-// --- Level 4: Clap detection ---
+// --- Level 4: Double clap detection ---
 function startClapDetection() {
   if (!analyser) return;
 
-  let lastClapTime = 0;
-  const clapInterval = 1000; // maximum time between claps in ms
-  let firstClapTime = 0;
-  let clapDetected = false;
+  let lastTapTime = 0;
+  let firstTapTime = 0;
+  const TAP_INTERVAL = 1000; // 1 second max between taps
+  const THRESHOLD = 0.12; // RMS threshold
 
-  function detectDoubleClap() {
+  function detect() {
     analyser.getByteTimeDomainData(dataArray);
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
       const v = (dataArray[i] - 128) / 128;
-      sum += v * v;
+      sum += v*v;
     }
     const rms = Math.sqrt(sum / dataArray.length);
     const now = Date.now();
-    const threshold = 0.12; // adjust sensitivity
 
-    if (rms > threshold && now - lastClapTime > 200) { // debounce 200ms
-      lastClapTime = now;
+    if (rms > THRESHOLD && now - lastTapTime > 200) {
+      lastTapTime = now;
 
-      if (firstClapTime === 0) {
-        firstClapTime = now;
+      if (firstTapTime === 0) {
+        firstTapTime = now;
         clapStatus.textContent = "👏 First clap detected!";
-      } else if (now - firstClapTime <= clapInterval) {
-        clapDetected = true;
+      } else if (now - firstTapTime <= TAP_INTERVAL) {
         clapStatus.textContent = "👏 Double clap detected!";
         setTimeout(() => {
           l4.classList.add("hidden");
@@ -160,18 +165,16 @@ function startClapDetection() {
         }, 500);
         return;
       } else {
-        // too slow, reset first clap
-        firstClapTime = now;
+        firstTapTime = now;
         clapStatus.textContent = "👏 First clap detected!";
       }
     }
 
-    if (!clapDetected) requestAnimationFrame(detectDoubleClap);
+    requestAnimationFrame(detect);
   }
 
-  detectDoubleClap();
+  detect();
 }
-
 </script>
 
 </body>
