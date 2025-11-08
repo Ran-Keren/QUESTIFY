@@ -37,17 +37,16 @@
   <button id="startBtn">Let's Start</button>
 </div>
 
-<!-- Level 2: Rules + mic permission -->
+<!-- Level 2: Rules + optional mic permission -->
 <div id="level2" class="hidden">
   <h2>Rules</h2>
   <p>1. You can use whatever you want.<br>
      2. You can't ask me for help.<br>
      3. There is no time limit.</p>
-  <button id="micBtn">Allow Microphone</button>
-  <button id="continueBtn" class="hidden">Start</button>
+  <button id="continueBtn">Start</button>
 </div>
 
-<!-- Level 3: Color input (full-page background) -->
+<!-- Level 3: Color input -->
 <div id="level3" class="hidden" 
      style="background:#00ff66; 
             width:100vw; 
@@ -80,7 +79,6 @@ const l4 = document.getElementById("level4");
 const l5 = document.getElementById("level5");
 
 const startBtn = document.getElementById("startBtn");
-const micBtn = document.getElementById("micBtn");
 const continueBtn = document.getElementById("continueBtn");
 
 const colorInput = document.getElementById("colorInput");
@@ -96,25 +94,13 @@ startBtn.onclick = () => {
   l2.classList.remove("hidden");
 };
 
-// --- Level 2: Mic permission ---
-micBtn.onclick = async () => {
-  try {
-    // Mic permission requested but no feedback needed
-    await navigator.mediaDevices.getUserMedia({ audio: true });
-    micBtn.classList.add("hidden");
-    continueBtn.classList.remove("hidden");
-  } catch (err) {
-    console.error(err);
-    alert("Microphone access denied or unavailable.");
-  }
-};
-
+// --- Level 2 ---
 continueBtn.onclick = () => {
   l2.classList.add("hidden");
   l3.classList.remove("hidden");
 };
 
-// --- Level 3: Color input ---
+// --- Level 3 ---
 submitColor.onclick = () => {
   const guess = colorInput.value.trim();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
@@ -130,9 +116,9 @@ submitColor.onclick = () => {
 // --- Level 4: Double tap detection ---
 function startDoubleTapDetection() {
   let lastTapTime = 0;
-  const maxInterval = 400; // max ms between taps for double tap
+  const maxInterval = 400; // ms between taps for double-tap
 
-  l4.addEventListener("touchstart", () => {
+  function handleTap() {
     const now = Date.now();
     if (now - lastTapTime <= maxInterval) {
       tapStatus.textContent = "👆 Double tap detected!";
@@ -144,22 +130,10 @@ function startDoubleTapDetection() {
       tapStatus.textContent = "👆 First tap detected!";
     }
     lastTapTime = now;
-  });
+  }
 
-  // Optional: also detect mouse click for desktop
-  l4.addEventListener("click", () => {
-    const now = Date.now();
-    if (now - lastTapTime <= maxInterval) {
-      tapStatus.textContent = "👆 Double tap detected!";
-      setTimeout(() => {
-        l4.classList.add("hidden");
-        l5.classList.remove("hidden");
-      }, 300);
-    } else {
-      tapStatus.textContent = "👆 First tap detected!";
-    }
-    lastTapTime = now;
-  });
+  l4.addEventListener("touchstart", handleTap);
+  l4.addEventListener("click", handleTap); // desktop support
 }
 </script>
 
