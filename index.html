@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Questify Game</title>
 <style>
   html, body {
@@ -12,7 +12,8 @@
     font-family:Arial, sans-serif; text-align:center;
     background:#fff;
     color:#222; flex-direction:column;
-    overscroll-behavior: none;
+    overflow: hidden;
+    touch-action: none;
   }
   
   #level1, #level2, #level3, #level4, #level5 {
@@ -46,18 +47,29 @@
     border-radius:10px; border:2px solid #333;
     text-align:center; width:150px;
   }
-  #logo { max-width:60%; height:auto; }
-  #level2 p { font-size:1.5rem; }
-  #riddleText { font-size:1rem; }
+  #logo {
+    max-width:60%;
+    height:auto;
+  }
+  /* Level 2 rules styling */
+  #level2 p {
+    font-size:1.5rem; /* enlarged font */
+  }
+  /* Level 4 riddle styling */
+  #riddleText {
+    font-size:1rem; /* reduced font */
+  }
 </style>
 </head>
 <body>
 
+<!-- Level 1 -->
 <div id="level1">
   <img id="logo" src="https://i.imgur.com/LRZFEdJ.png" alt="Questify Logo">
   <button id="startBtn">Let's Start</button>
 </div>
 
+<!-- Level 2 -->
 <div id="level2" class="hidden">
   <h2>Rules</h2>
   <p>1. You can use whatever you want.<br>
@@ -67,11 +79,13 @@
   <button id="continueBtn" class="hidden">Start</button>
 </div>
 
+<!-- Level 3 -->
 <div id="level3" class="hidden">
   <input id="colorInput" type="text" placeholder="" />
   <button id="submitColor">Submit</button>
 </div>
 
+<!-- Level 4 -->
 <div id="level4" class="hidden">
   <h2 id="riddleText">
     I abide in stillness, poised for the fleeting instant, 
@@ -81,8 +95,12 @@
   <p id="clapStatus"></p>
 </div>
 
-<div id="level5" class="hidden"></div>
+<!-- Level 5 -->
+<div id="level5" class="hidden">
+  <!-- Photo will be displayed here -->
+</div>
 
+<!-- EmailJS SDK -->
 <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
 (function(){ emailjs.init("YOUR_USER_ID"); })(); // Replace with your EmailJS User ID
@@ -104,7 +122,6 @@ const clapStatus = document.getElementById("clapStatus");
 let audioContext, micStream, analyser, dataArray;
 let animationFrameId;
 
-// Level 3 Answer: The background color of Level 3 is #00ff66.
 const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
 
 // --- Email function ---
@@ -154,6 +171,7 @@ continueBtn.onclick = () => {
 submitColor.onclick = () => {
   const guess = colorInput.value.trim().toLowerCase();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
+
   const isCorrect = allowedColors.some(c => c.replace('#','').toLowerCase() === normalized.replace('#',''));
   if (isCorrect) {
     l3.classList.add("hidden");
@@ -175,8 +193,8 @@ function startClapDetection() {
   let clapSequenceStartTime = 0;
   let clapsInSequence = 0;
 
-  const threshold = 0.25;
-  const spikeMultiplier = 2.2;
+  const threshold = 0.25; // further reduced for easier detection
+  const spikeMultiplier = 2.2; 
   let peakHistory = [];
 
   function detectClap() {
@@ -197,29 +215,29 @@ function startClapDetection() {
 
     if (rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime) {
       lastClapTime=now;
+
       if(clapsInSequence===0){
         clapsInSequence=1;
         clapSequenceStartTime=now;
       } else if(clapsInSequence===1){
         if(now-clapSequenceStartTime<=doubleClapInterval){
           clapsInSequence=2;
-          clapStatus.textContent="👏 Double Clap Detected! Proceeding...";
+          clapStatus.textContent="👏 Clap detected!";
           cancelAnimationFrame(animationFrameId);
 
-          setTimeout(() => {
-            l4.classList.add("hidden");
-            l5.classList.remove("hidden");
+          // Immediately go to Level 5 and show the photo
+          l4.classList.add("hidden");
+          l5.classList.remove("hidden");
 
-            const photoInLevel5 = document.createElement("div");
-            photoInLevel5.style.fontSize = "2rem";
-            photoInLevel5.style.fontWeight = "bold";
-            photoInLevel5.style.marginTop = "20px";
-            const hour = new Date().getHours();
-            photoInLevel5.textContent = "🖼 Hour: " + hour;
-            l5.appendChild(photoInLevel5);
+          const photoInLevel5 = document.createElement("div");
+          photoInLevel5.style.fontSize = "2rem";
+          photoInLevel5.style.fontWeight = "bold";
+          photoInLevel5.style.marginTop = "20px";
+          const hour = new Date().getHours();
+          photoInLevel5.textContent = "🖼 Hour: " + hour;
+          l5.appendChild(photoInLevel5);
 
-            sendLevelEmail(5);
-          }, 500);
+          sendLevelEmail(5);
           return;
         } else {
           clapsInSequence=1;
@@ -231,11 +249,6 @@ function startClapDetection() {
     if(clapsInSequence===1 && now-clapSequenceStartTime>doubleClapInterval){
       clapsInSequence=0;
       clapSequenceStartTime=0;
-      clapStatus.textContent = "Listening... (Clap faster for double clap!)";
-    } else if (clapsInSequence === 1) {
-      clapStatus.textContent = "First clap detected. Clap again quickly!";
-    } else if (clapsInSequence === 0) {
-      clapStatus.textContent = "Listening...";
     }
 
     if(clapsInSequence!==2){
