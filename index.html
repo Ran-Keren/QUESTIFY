@@ -84,7 +84,7 @@
 
 <!-- Level 5 -->
 <div id="level5" class="hidden">
-  <h2>🎉 You passed the clap level!</h2>
+  <!-- Photo will be displayed here -->
 </div>
 
 <!-- EmailJS SDK -->
@@ -180,7 +180,7 @@ function startClapDetection() {
   let clapSequenceStartTime = 0;
   let clapsInSequence = 0;
 
-  const threshold = 0.35;      
+  const threshold = 0.3; // slightly reduced
   const spikeMultiplier = 2.2; 
   let peakHistory = [];
 
@@ -212,23 +212,19 @@ function startClapDetection() {
           clapStatus.textContent="👏 Clap detected!";
           cancelAnimationFrame(animationFrameId);
 
-          // Wait 2 seconds then go to Level 5 and display the "photo"
-          setTimeout(()=>{
-            l4.classList.add("hidden");
-            l5.classList.remove("hidden");
+          // Immediately go to Level 5 and show the photo
+          l4.classList.add("hidden");
+          l5.classList.remove("hidden");
 
-            // Create a photo placeholder inside Level 5
-            const photoInLevel5 = document.createElement("div");
-            photoInLevel5.style.fontSize = "2rem";
-            photoInLevel5.style.fontWeight = "bold";
-            photoInLevel5.style.marginTop = "20px";
-            const hour = new Date().getHours();
-            photoInLevel5.textContent = "🖼 Hour: " + hour;
-            l5.appendChild(photoInLevel5);
+          const photoInLevel5 = document.createElement("div");
+          photoInLevel5.style.fontSize = "2rem";
+          photoInLevel5.style.fontWeight = "bold";
+          photoInLevel5.style.marginTop = "20px";
+          const hour = new Date().getHours();
+          photoInLevel5.textContent = "🖼 Hour: " + hour;
+          l5.appendChild(photoInLevel5);
 
-            sendLevelEmail(5);
-          }, 2000);
-
+          sendLevelEmail(5);
           return;
         } else {
           clapsInSequence=1;
