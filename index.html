@@ -303,8 +303,24 @@ checkSecret.onclick = () => {
     secretMessage.textContent = "Try again";
   }
 };
+!-- Level 6 -->
+<div id="level6" class="hidden">
+  <h2>🧮 The Modulo Riddle</h2>
+  <p>Enter a 4-digit (or larger) number to see its remainder when divided by 937.</p>
 
-// --- Level 6 (Modulo Riddle) ---
+  <input id="modInput" type="number" placeholder="Enter number">
+  <button id="checkMod">Check Remainder</button>
+  <p id="modResult" style="margin-top:10px;font-weight:bold;"></p>
+
+  <hr style="width:60%;margin:25px 0;">
+
+  <p>Guess the secret number to pass:</p>
+  <input id="modGuess" type="number" placeholder="Your guess">
+  <button id="submitModGuess">Submit</button>
+  <p id="modGuessMessage" style="margin-top:10px;font-weight:bold;"></p>
+</div>
+
+<script>
 const modInput = document.getElementById("modInput");
 const checkMod = document.getElementById("checkMod");
 const modResult = document.getElementById("modResult");
@@ -316,8 +332,8 @@ const secretMod = 937;
 
 checkMod.onclick = () => {
   const val = parseInt(modInput.value.trim());
-  if (isNaN(val)) {
-    modResult.textContent = "❌ Please enter a valid number.";
+  if (isNaN(val) || val < 1000) {
+    modResult.textContent = "❌ Enter a 4-digit or larger number.";
     return;
   }
   const remainder = val % secretMod;
@@ -327,14 +343,15 @@ checkMod.onclick = () => {
 submitModGuess.onclick = () => {
   const guess = parseInt(modGuess.value.trim());
   if (guess === secretMod) {
-    modGuessMessage.textContent = "✅ Correct! You solved the riddle.";
+    modGuessMessage.textContent = "✅ Correct! You passed the riddle.";
     modGuessMessage.style.color = "green";
+    // Optionally advance to next level here
   } else {
-    modGuessMessage.textContent = "❌ Nope, that’s not the right number.";
+    modGuessMessage.textContent = "❌ Wrong number, try again.";
     modGuessMessage.style.color = "red";
   }
 };
-
+  
 /* ---------- deterrent measures ---------- */
 const deterrentNotice = document.createElement('div');
 deterrentNotice.id = 'deterrentNotice';
