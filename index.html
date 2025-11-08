@@ -1,11 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Questify</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Questify Game</title>
   <style>
-    html,body {
+    html, body {
       margin:0;
       padding:0;
       height:100%;
@@ -17,6 +17,7 @@
       text-align:center;
       background:#fff;
       color:#222;
+      flex-direction:column;
     }
     .hidden { display:none; }
     button {
@@ -29,9 +30,7 @@
       color:white;
       cursor:pointer;
     }
-    button:hover {
-      background:#c53e63;
-    }
+    button:hover { background:#c53e63; }
     input {
       font-size:1.2rem;
       padding:10px;
@@ -62,7 +61,7 @@
 
   <!-- Level 3: Color input -->
   <div id="level3" class="hidden" style="background:#00ff66; flex-direction:column;">
-    <input id="colorInput" type="text" />
+    <input id="colorInput" type="text" placeholder="" />
     <button id="submitColor">Submit</button>
   </div>
 
@@ -92,24 +91,32 @@
 
     let audioContext, micStream, analyser, dataArray;
 
+    const targetColor = '#00ff66'; // Fixed color
+    const requiredClaps = 2; // Number of claps needed
+    let clapCount = 0;
+
+    // --- Level 1 ---
     startBtn.onclick = () => {
       l1.classList.add("hidden");
       l2.classList.remove("hidden");
     };
 
+    // --- Level 2: Mic permission ---
     micBtn.onclick = async () => {
       try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const source = audioContext.createMediaStreamSource(micStream);
         analyser = audioContext.createAnalyser();
-        source.connect(analyser);
         analyser.fftSize = 512;
         dataArray = new Uint8Array(analyser.fftSize);
+        source.connect(analyser);
+
         micBtn.textContent = "Microphone allowed ✅";
         continueBtn.classList.remove("hidden");
       } catch (err) {
         micBtn.textContent = "Permission denied ❌";
+        console.error(err);
       }
     };
 
@@ -118,24 +125,32 @@
       l3.classList.remove("hidden");
     };
 
+    // --- Level 3: Color input ---
     submitColor.onclick = () => {
-      // You can validate or check the color input if needed
-      l3.classList.add("hidden");
-      l4.classList.remove("hidden");
-      startClapDetection();
+      const guess = colorInput.value.trim();
+      const normalized = guess.startsWith('#') ? guess : '#' + guess;
+      if (normalized.toLowerCase() === targetColor.toLowerCase()) {
+        // Correct! Go to Level 4
+        l3.classList.add("hidden");
+        l4.classList.remove("hidden");
+        startClapDetection();
+      } else {
+        alert("❌ Wrong color! Try again.");
+      }
     };
 
+    // --- Level 4: Clap detection ---
     function startClapDetection() {
       if (!analyser) {
         clapStatus.textContent = "Microphone not active.";
         return;
       }
 
+      clapCount = 0;
       let lastClap = 0;
 
       function detectClap() {
         analyser.getByteTimeDomainData(dataArray);
-        // Calculate the average amplitude
         let sum = 0;
         for (let i = 0; i < dataArray.length; i++) {
           const v = (dataArray[i] - 128) / 128;
@@ -144,19 +159,20 @@
         const rms = Math.sqrt(sum / dataArray.length);
         const now = Date.now();
 
-        // If the RMS (volume) is high enough, detect as clap
-        if (rms > 0.25 && now - lastClap > 1000) {
+        if (rms > 0.25 && now - lastClap > 300) { // threshold & debounce
           lastClap = now;
-          clapStatus.textContent = "👏 Clap detected!";
-          setTimeout(() => {
-            l4.classList.add("hidden");
-            l5.classList.remove("hidden");
-          }, 1000);
-        }
+          clapCount++;
+          clapStatus.textContent = `👏 Clap detected! (${clapCount}/${requiredClaps})`;
 
+          if (clapCount >= requiredClaps) {
+            setTimeout(() => {
+              l4.classList.add("hidden");
+              l5.classList.remove("hidden");
+            }, 500);
+          }
+        }
         requestAnimationFrame(detectClap);
       }
-
       detectClap();
     }
   </script>
