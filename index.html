@@ -37,38 +37,31 @@
   <button id="startBtn">Let's Start</button>
 </div>
 
-<!-- Level 2: Rules + optional mic permission -->
+<!-- Level 2: Rules + mic permission -->
 <div id="level2" class="hidden">
   <h2>Rules</h2>
   <p>1. You can use whatever you want.<br>
      2. You can't ask me for help.<br>
      3. There is no time limit.</p>
-  <button id="continueBtn">Start</button>
+  <button id="micBtn">Allow Microphone</button>
+  <button id="continueBtn" class="hidden">Start</button>
 </div>
 
 <!-- Level 3: Color input -->
-<div id="level3" class="hidden" 
-     style="background:#00ff66; 
-            width:100vw; 
-            height:100vh; 
-            display:flex; 
-            flex-direction:column; 
-            justify-content:center; 
-            align-items:center;">
+<div id="level3" class="hidden" style="background:#00ff66; flex-direction:column;">
   <input id="colorInput" type="text" placeholder="" />
   <button id="submitColor">Submit</button>
 </div>
 
-<!-- Level 4: Double tap detection -->
-<div id="level4" class="hidden" 
-     style="width:100vw; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#eee;">
-  <h2>👆 Double tap to continue...</h2>
-  <p id="tapStatus"></p>
+<!-- Level 4: Clap detection -->
+<div id="level4" class="hidden">
+  <h2>👏 Clap to continue...</h2>
+  <p id="clapStatus"></p>
 </div>
 
 <!-- Level 5: Success -->
 <div id="level5" class="hidden">
-  <h2>🎉 You passed the double-tap level!</h2>
+  <h2>🎉 You passed the clap level!</h2>
 </div>
 
 <script>
@@ -77,16 +70,16 @@ const l2 = document.getElementById("level2");
 const l3 = document.getElementById("level3");
 const l4 = document.getElementById("level4");
 const l5 = document.getElementById("level5");
-
 const startBtn = document.getElementById("startBtn");
+const micBtn = document.getElementById("micBtn");
 const continueBtn = document.getElementById("continueBtn");
-
-const colorInput = document.getElementById("colorInput");
 const submitColor = document.getElementById("submitColor");
+const colorInput = document.getElementById("colorInput");
+const clapStatus = document.getElementById("clapStatus");
 
-const tapStatus = document.getElementById("tapStatus");
-
+let audioContext, micStream, analyser, dataArray;
 const targetColor = '#00ff66';
+let clapCount = 0;
 
 // --- Level 1 ---
 startBtn.onclick = () => {
@@ -94,47 +87,91 @@ startBtn.onclick = () => {
   l2.classList.remove("hidden");
 };
 
-// --- Level 2 ---
+// --- Level 2: Mic permission ---
+micBtn.onclick = async () => {
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioContext.createMediaStreamSource(micStream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 512;
+    dataArray = new Uint8Array(analyser.fftSize);
+    source.connect(analyser);
+
+    // Hide mic button, show Start button
+    micBtn.classList.add("hidden");
+    continueBtn.classList.remove("hidden");
+  } catch (err) {
+    console.error(err);
+    alert("Microphone access denied or unavailable.");
+  }
+};
+
 continueBtn.onclick = () => {
   l2.classList.add("hidden");
   l3.classList.remove("hidden");
 };
 
-// --- Level 3 ---
+// --- Level 3: Color input ---
 submitColor.onclick = () => {
   const guess = colorInput.value.trim();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
   if (normalized.toLowerCase() === targetColor.toLowerCase()) {
     l3.classList.add("hidden");
     l4.classList.remove("hidden");
-    startDoubleTapDetection();
+    startClapDetection();
   } else {
     alert("❌ Wrong color! Try again.");
   }
 };
 
-// --- Level 4: Double tap detection ---
-function startDoubleTapDetection() {
-  let lastTapTime = 0;
-  const maxInterval = 400; // ms between taps for double-tap
+// --- Level 4: Clap detection ---
+function startClapDetection() {
+  if (!analyser) return;
 
-  function handleTap() {
-    const now = Date.now();
-    if (now - lastTapTime <= maxInterval) {
-      tapStatus.textContent = "👆 Double tap detected!";
-      setTimeout(() => {
-        l4.classList.add("hidden");
-        l5.classList.remove("hidden");
-      }, 300);
-    } else {
-      tapStatus.textContent = "👆 First tap detected!";
+  let lastClapTime = 0;
+  const clapInterval = 1000; // maximum time between claps in ms
+  let firstClapTime = 0;
+  let clapDetected = false;
+
+  function detectDoubleClap() {
+    analyser.getByteTimeDomainData(dataArray);
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      const v = (dataArray[i] - 128) / 128;
+      sum += v * v;
     }
-    lastTapTime = now;
+    const rms = Math.sqrt(sum / dataArray.length);
+    const now = Date.now();
+    const threshold = 0.12; // adjust sensitivity
+
+    if (rms > threshold && now - lastClapTime > 200) { // debounce 200ms
+      lastClapTime = now;
+
+      if (firstClapTime === 0) {
+        firstClapTime = now;
+        clapStatus.textContent = "👏 First clap detected!";
+      } else if (now - firstClapTime <= clapInterval) {
+        clapDetected = true;
+        clapStatus.textContent = "👏 Double clap detected!";
+        setTimeout(() => {
+          l4.classList.add("hidden");
+          l5.classList.remove("hidden");
+        }, 500);
+        return;
+      } else {
+        // too slow, reset first clap
+        firstClapTime = now;
+        clapStatus.textContent = "👏 First clap detected!";
+      }
+    }
+
+    if (!clapDetected) requestAnimationFrame(detectDoubleClap);
   }
 
-  l4.addEventListener("touchstart", handleTap);
-  l4.addEventListener("click", handleTap); // desktop support
+  detectDoubleClap();
 }
+
 </script>
 
 </body>
