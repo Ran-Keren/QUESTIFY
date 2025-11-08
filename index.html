@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Questify</title>
+  <style>
+    html,body {
+      margin:0;
+      padding:0;
+      height:100%;
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      font-family:Arial, sans-serif;
+      text-align:center;
+      background:#fff;
+      color:#222;
+    }
+    .hidden { display:none; }
+    button {
+      margin-top:20px;
+      padding:10px 20px;
+      font-size:1.2rem;
+      border:none;
+      border-radius:10px;
+      background:#e94e77;
+      color:white;
+      cursor:pointer;
+    }
+    button:hover {
+      background:#c53e63;
+    }
+    input {
+      font-size:1.2rem;
+      padding:10px;
+      border-radius:10px;
+      border:2px solid #333;
+      text-align:center;
+      width:150px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Level 1: Logo -->
+  <div id="level1">
+    <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
+    <button id="startBtn">Let's Start</button>
+  </div>
+
+  <!-- Level 2: Rules + mic permission -->
+  <div id="level2" class="hidden">
+    <h2>Rules</h2>
+    <p>1. You can use whatever you want.<br>
+       2. You can't ask me for help.<br>
+       3. There is no time limit.</p>
+    <button id="micBtn">Allow Microphone</button>
+    <button id="continueBtn" class="hidden">Start</button>
+  </div>
+
+  <!-- Level 3: Color input -->
+  <div id="level3" class="hidden" style="background:#00ff66; flex-direction:column;">
+    <input id="colorInput" type="text" />
+    <button id="submitColor">Submit</button>
+  </div>
+
+  <!-- Level 4: Clap detection -->
+  <div id="level4" class="hidden">
+    <h2>👏 Clap to continue...</h2>
+    <p id="clapStatus"></p>
+  </div>
+
+  <!-- Level 5: Success -->
+  <div id="level5" class="hidden">
+    <h2>🎉 You passed the clap level!</h2>
+  </div>
+
+  <script>
+    const l1 = document.getElementById("level1");
+    const l2 = document.getElementById("level2");
+    const l3 = document.getElementById("level3");
+    const l4 = document.getElementById("level4");
+    const l5 = document.getElementById("level5");
+    const startBtn = document.getElementById("startBtn");
+    const micBtn = document.getElementById("micBtn");
+    const continueBtn = document.getElementById("continueBtn");
+    const submitColor = document.getElementById("submitColor");
+    const colorInput = document.getElementById("colorInput");
+    const clapStatus = document.getElementById("clapStatus");
+
+    let audioContext, micStream, analyser, dataArray;
+
+    startBtn.onclick = () => {
+      l1.classList.add("hidden");
+      l2.classList.remove("hidden");
+    };
+
+    micBtn.onclick = async () => {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const source = audioContext.createMediaStreamSource(micStream);
+        analyser = audioContext.createAnalyser();
+        source.connect(analyser);
+        analyser.fftSize = 512;
+        dataArray = new Uint8Array(analyser.fftSize);
+        micBtn.textContent = "Microphone allowed ✅";
+        continueBtn.classList.remove("hidden");
+      } catch (err) {
+        micBtn.textContent = "Permission denied ❌";
+      }
+    };
+
+    continueBtn.onclick = () => {
+      l2.classList.add("hidden");
+      l3.classList.remove("hidden");
+    };
+
+    submitColor.onclick = () => {
+      // You can validate or check the color input if needed
+      l3.classList.add("hidden");
+      l4.classList.remove("hidden");
+      startClapDetection();
+    };
+
+    function startClapDetection() {
+      if (!analyser) {
+        clapStatus.textContent = "Microphone not active.";
+        return;
+      }
+
+      let lastClap = 0;
+
+      function detectClap() {
+        analyser.getByteTimeDomainData(dataArray);
+        // Calculate the average amplitude
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = (dataArray[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        const now = Date.now();
+
+        // If the RMS (volume) is high enough, detect as clap
+        if (rms > 0.25 && now - lastClap > 1000) {
+          lastClap = now;
+          clapStatus.textContent = "👏 Clap detected!";
+          setTimeout(() => {
+            l4.classList.add("hidden");
+            l5.classList.remove("hidden");
+          }, 1000);
+        }
+
+        requestAnimationFrame(detectClap);
+      }
+
+      detectClap();
+    }
+  </script>
+
+</body>
+</html>
