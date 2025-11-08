@@ -14,9 +14,20 @@
     color:#222; flex-direction:column;
   }
   
-  /* Apply the specific green screen color only to Level 3 container */
+  /* Critical Fix: Make Level 3 fill the entire screen and apply the green background */
   #level3 {
-      background: #00ff66; /* Target color for the puzzle */
+      background: #00ff66; /* Green Screen Color */
+      /* These ensure it covers the whole screen */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10; 
+      flex-direction:column;
+      display: flex; /* Ensure content is centered */
+      justify-content: center;
+      align-items: center;
   }
 
   .hidden { display:none; }
@@ -52,7 +63,7 @@
   <button id="continueBtn" class="hidden">Start</button>
 </div>
 
-<div id="level3" class="hidden" style="flex-direction:column;">
+<div id="level3" class="hidden">
   <input id="colorInput" type="text" placeholder="" />
   <button id="submitColor">Submit</button>
 </div>
@@ -79,10 +90,9 @@ const submitColor = document.getElementById("submitColor");
 const colorInput = document.getElementById("colorInput");
 const clapStatus = document.getElementById("clapStatus");
 
-let audioContext, micStream, analyser, dataArray;
-// Target color is the background of level 3
+let audioContext, micStream, analyser, dataArray, frequencyData;
 const targetColor = '#00ff66'; 
-let animationFrameId; // To stop the detection loop
+let animationFrameId;
 
 // --- Level 1 ---
 startBtn.onclick = () => {
@@ -97,11 +107,14 @@ micBtn.onclick = async () => {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const source = audioContext.createMediaStreamSource(micStream);
     analyser = audioContext.createAnalyser();
-    analyser.fftSize = 512;
-    dataArray = new Uint8Array(analyser.fftSize);
+    
+    // Use a larger FFT size for better frequency analysis
+    analyser.fftSize = 1024; 
+    dataArray = new Uint8Array(analyser.fftSize); // Time-domain data for RMS (loudness)
+    frequencyData = new Uint8Array(analyser.frequencyBinCount); // Frequency data for filtering speech
+    
     source.connect(analyser);
 
-    // Hide mic button, show Start button
     micBtn.classList.add("hidden");
     continueBtn.classList.remove("hidden");
     clapStatus.textContent = "Microphone ready. Start the game.";
@@ -114,14 +127,13 @@ micBtn.onclick = async () => {
 continueBtn.onclick = () => {
   l2.classList.add("hidden");
   l3.classList.remove("hidden");
-  colorInput.focus(); // Focus on the input for easier play
+  colorInput.focus();
 };
 
 // --- Level 3: Color input ---
 submitColor.onclick = () => {
   const guess = colorInput.value.trim();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
-  // Check if the input matches the background color of level 3
   if (normalized.toLowerCase() === targetColor.toLowerCase()) {
     l3.classList.add("hidden");
     l4.classList.remove("hidden");
@@ -131,57 +143,67 @@ submitColor.onclick = () => {
   }
 };
 
-// --- Level 4: Clap detection (Strict double clap logic) ---
+// --- Level 4: Clap detection (Fixed for Double Clap & Speech Filter) ---
 function startClapDetection() {
   if (!analyser) return;
 
   let lastClapTime = 0;
-  // Shorter interval for a *double* clap
   const doubleClapInterval = 600; 
-  const debounceTime = 200; // time in ms to ignore noise after a clap
+  const debounceTime = 200; 
   let clapSequenceStartTime = 0;
   let clapsInSequence = 0;
   
-  // Adjusted for double clap
-  const threshold = 0.15; // adjust sensitivity
+  // Audio Thresholds (Higher threshold requires louder sound)
+  const rmsThreshold = 0.20; 
+  // Frequency Filter: Claps have energy across many frequencies. 
+  // We check for energy in the mid-high range (> 2kHz) where speech drops off.
+  const frequencyThreshold = 100; // How much energy must be present in the high-frequency band (0-255)
+  const highFreqStart = Math.floor(2000 / (audioContext.sampleRate / analyser.fftSize)); 
 
   function detectClap() {
     analyser.getByteTimeDomainData(dataArray);
+    analyser.getByteFrequencyData(frequencyData);
+
+    // 1. Calculate RMS (Loudness)
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
       const v = (dataArray[i] - 128) / 128;
       sum += v * v;
     }
     const rms = Math.sqrt(sum / dataArray.length);
+
+    // 2. Check for High Frequency Content (Filter out deep speech/whispers)
+    let highFreqEnergy = 0;
+    for (let i = highFreqStart; i < analyser.frequencyBinCount; i++) {
+        highFreqEnergy += frequencyData[i];
+    }
+    const avgHighFreqEnergy = highFreqEnergy / (analyser.frequencyBinCount - highFreqStart);
+
     const now = Date.now();
 
-    if (rms > threshold && now - lastClapTime > debounceTime) {
+    // Check if loud enough AND has enough high-frequency content AND is outside the debounce period
+    if (rms > rmsThreshold && avgHighFreqEnergy > frequencyThreshold && now - lastClapTime > debounceTime) {
       // --- CLAP DETECTED ---
       lastClapTime = now;
       
       if (clapsInSequence === 0) {
-        // First clap in a new sequence
         clapsInSequence = 1;
         clapSequenceStartTime = now;
         clapStatus.textContent = "👏 First clap detected! Clap again quickly...";
       } else if (clapsInSequence === 1) {
-        // Second clap! Check timing.
         if (now - clapSequenceStartTime <= doubleClapInterval) {
           // SUCCESSFUL DOUBLE CLAP
-          clapsInSequence = 2; // Mark as done
+          clapsInSequence = 2; 
           clapStatus.textContent = "🎉 Double clap detected! Level passed!";
-          
-          // Stop the detection loop
           cancelAnimationFrame(animationFrameId);
           
-          // Move to success screen
           setTimeout(() => {
             l4.classList.add("hidden");
             l5.classList.remove("hidden");
           }, 500);
-          return; // Exit the function to prevent further calls
+          return; 
         } else {
-          // Second clap was too slow, restart the sequence
+          // Too slow, restart sequence
           clapsInSequence = 1;
           clapSequenceStartTime = now;
           clapStatus.textContent = "👏 Too slow! First clap detected again. Clap quickly!";
@@ -196,13 +218,12 @@ function startClapDetection() {
         clapStatus.textContent = "A double clap will unlock the next level.";
     }
 
-    // Continue the loop if the level hasn't been passed
+    // Continue the loop
     if (clapsInSequence !== 2) {
         animationFrameId = requestAnimationFrame(detectClap);
     }
   }
 
-  // Start the loop
   detectClap();
 }
 
