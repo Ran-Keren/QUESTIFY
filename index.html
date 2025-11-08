@@ -91,19 +91,20 @@ input { font-size:1.2rem; padding:10px; border-radius:10px; border:2px solid #33
     <input id="modGuess" placeholder="Your guess" />
     <button id="submitModGuess">Submit Guess</button>
     <p id="modGuessMessage" style="font-weight:bold;margin-top:10px;"></p>
+    <p id="modReminder" style="font-weight:bold; margin-top:10px;"></p>
 </div>
 
 <!-- Level 7 -->
 <div id="level7" class="hidden">
     <h2>Level 7: To Be Continued...</h2>
     <p>The adventure continues in the next chapter!</p>
-    <p id="modReminder" style="font-weight:bold; margin-top:20px;"></p>
+    <p id="modReminderFinal" style="font-weight:bold; margin-top:20px;"></p>
 </div>
 
 <!-- EmailJS SDK -->
 <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
-(function(){ emailjs.init("YOUR_USER_ID"); })(); // Replace with your EmailJS User ID
+(function(){ emailjs.init("YOUR_USER_ID"); })();
 </script>
 
 <script>
@@ -136,6 +137,7 @@ const modGuess = document.getElementById("modGuess");
 const submitModGuess = document.getElementById("submitModGuess");
 const modGuessMessage = document.getElementById("modGuessMessage");
 const modReminder = document.getElementById("modReminder");
+const modReminderFinal = document.getElementById("modReminderFinal");
 
 let audioContext, micStream, analyser, dataArray, animationFrameId;
 let secretMod;
@@ -149,7 +151,6 @@ const level5Images = [
     "https://i.imgur.com/ZLkx3eu.jpeg"
 ];
 
-// --- Email function ---
 function sendLevelEmail(levelNumber) {
     emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
         level: levelNumber,
@@ -296,7 +297,7 @@ checkSecret.onclick = () => {
     }
 };
 
-// ---------- Level 6: Modulo Riddle ----------
+// --- Level 6: Modulo Riddle ---
 function generateRandomPrimeUnder1000() {
     const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,541,547,557,563,569,571,577,587,593,599,601,607,613,617,619,631,641,643,647,653,659,661,673,677,683,691,701,709,719,727,733,739,743,751,757,761,769,773,787,797,809,811,821,823,827,829,839,853,857,859,863,877,881,883,887,907,911,919,929,937,941,947,953,967,971,977,983,991,997];
     return primes[Math.floor(Math.random() * primes.length)];
@@ -306,10 +307,13 @@ checkMod.onclick = () => {
     secretMod = generateRandomPrimeUnder1000(); // new secret every check
     const val = parseInt(modInput.value.trim());
     if (!isNaN(val) && val >= 1000) {
-        modResult.textContent = val; // only show number entered
-        modGuess.value = "";         // reset guess
+        const remainder = val % secretMod;
+        modResult.textContent = remainder;        // show remainder
+        modReminder.textContent = remainder;      // show reminder
+        modGuess.value = "";
     } else {
         modResult.textContent = "";
+        modReminder.textContent = "";
     }
 };
 
@@ -321,7 +325,7 @@ submitModGuess.onclick = () => {
         setTimeout(() => {
             l6.classList.add("hidden");
             l7.classList.remove("hidden");
-            modReminder.textContent = "Reminder: Secret modulo was " + secretMod;
+            modReminderFinal.textContent = "Reminder: Secret modulo was " + secretMod;
             sendLevelEmail(7);
         }, 1000);
     } else {
