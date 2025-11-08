@@ -27,7 +27,6 @@
     border-radius:10px; border:2px solid #333;
     text-align:center; width:150px;
   }
-  /* Make level 3 cover entire background */
   #level3 {
     position: absolute;
     top:0; left:0; right:0; bottom:0;
@@ -40,13 +39,11 @@
 </head>
 <body>
 
-<!-- Level 1: Logo -->
 <div id="level1">
   <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
   <button id="startBtn">Let's Start</button>
 </div>
 
-<!-- Level 2: Rules + mic permission -->
 <div id="level2" class="hidden">
   <h2>Rules</h2>
   <p>1. You can use whatever you want.<br>
@@ -56,19 +53,16 @@
   <button id="continueBtn" class="hidden">Start</button>
 </div>
 
-<!-- Level 3: Color input -->
 <div id="level3" class="hidden">
   <input id="colorInput" type="text" placeholder="" />
   <button id="submitColor">Submit</button>
 </div>
 
-<!-- Level 4: Clap detection -->
 <div id="level4" class="hidden">
   <h2>👏 Double tap (clap) to continue...</h2>
   <p id="clapStatus"></p>
 </div>
 
-<!-- Level 5: Success -->
 <div id="level5" class="hidden">
   <h2>🎉 You passed the clap level!</h2>
 </div>
@@ -128,18 +122,22 @@ submitColor.onclick = () => {
     l4.classList.remove("hidden");
     startClapDetection();
   } else {
-    alert("❌ Wrong color! Try again.");
+    // Clear input silently for another attempt
+    colorInput.value = '';
   }
 };
 
-// --- Level 4: Double clap detection ---
+// --- Level 4: Robust double clap detection ---
 function startClapDetection() {
   if (!analyser) return;
 
   let lastTapTime = 0;
   let firstTapTime = 0;
-  const TAP_INTERVAL = 1000; // 1 second max between taps
-  const THRESHOLD = 0.12; // RMS threshold
+  let noisyCount = 0;
+  let quietCount = 0;
+  const MAX_TAP_BLOCKS = 3; // max blocks for a single tap
+  const THRESHOLD = 0.12;
+  const TAP_INTERVAL = 1000; // max time between taps
 
   function detect() {
     analyser.getByteTimeDomainData(dataArray);
@@ -151,23 +149,29 @@ function startClapDetection() {
     const rms = Math.sqrt(sum / dataArray.length);
     const now = Date.now();
 
-    if (rms > THRESHOLD && now - lastTapTime > 200) {
-      lastTapTime = now;
-
-      if (firstTapTime === 0) {
-        firstTapTime = now;
-        clapStatus.textContent = "👏 First clap detected!";
-      } else if (now - firstTapTime <= TAP_INTERVAL) {
-        clapStatus.textContent = "👏 Double clap detected!";
-        setTimeout(() => {
-          l4.classList.add("hidden");
-          l5.classList.remove("hidden");
-        }, 500);
-        return;
-      } else {
-        firstTapTime = now;
-        clapStatus.textContent = "👏 First clap detected!";
+    if (rms > THRESHOLD) {
+      noisyCount++;
+      quietCount = 0;
+    } else {
+      if (noisyCount > 0 && noisyCount <= MAX_TAP_BLOCKS) {
+        // Valid tap detected
+        if (firstTapTime === 0) {
+          firstTapTime = now;
+          clapStatus.textContent = "👏 First clap detected!";
+        } else if (now - firstTapTime <= TAP_INTERVAL) {
+          clapStatus.textContent = "👏 Double clap detected!";
+          setTimeout(() => {
+            l4.classList.add("hidden");
+            l5.classList.remove("hidden");
+          }, 500);
+          return; // stop detection
+        } else {
+          firstTapTime = now;
+          clapStatus.textContent = "👏 First clap detected!";
+        }
       }
+      noisyCount = 0;
+      quietCount++;
     }
 
     requestAnimationFrame(detect);
