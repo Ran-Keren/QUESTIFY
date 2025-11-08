@@ -1,181 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Questify Game</title>
-  <style>
-    html, body {
-      margin:0;
-      padding:0;
-      height:100%;
-      width:100%;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      font-family:Arial, sans-serif;
-      text-align:center;
-      background:#fff;
-      color:#222;
-      flex-direction:column;
-    }
-    .hidden { display:none; }
-    button {
-      margin-top:20px;
-      padding:10px 20px;
-      font-size:1.2rem;
-      border:none;
-      border-radius:10px;
-      background:#e94e77;
-      color:white;
-      cursor:pointer;
-    }
-    button:hover { background:#c53e63; }
-    input {
-      font-size:1.2rem;
-      padding:10px;
-      border-radius:10px;
-      border:2px solid #333;
-      text-align:center;
-      width:150px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Questify Game</title>
+<style>
+  html, body {
+    margin:0; padding:0;
+    height:100%; width:100%;
+    display:flex; justify-content:center; align-items:center;
+    font-family:Arial, sans-serif; text-align:center;
+    background:#fff; color:#222; flex-direction:column;
+  }
+  .hidden { display:none; }
+  button {
+    margin-top:20px;
+    padding:10px 20px;
+    font-size:1.2rem;
+    border:none; border-radius:10px;
+    background:#e94e77; color:white;
+    cursor:pointer;
+  }
+  button:hover { background:#c53e63; }
+  input {
+    font-size:1.2rem; padding:10px;
+    border-radius:10px; border:2px solid #333;
+    text-align:center; width:150px;
+  }
+</style>
 </head>
 <body>
 
-  <!-- Level 1: Logo -->
-  <div id="level1">
-    <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
-    <button id="startBtn">Let's Start</button>
-  </div>
+<!-- Level 1: Logo -->
+<div id="level1">
+  <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
+  <button id="startBtn">Let's Start</button>
+</div>
 
-  <!-- Level 2: Rules + mic permission -->
-  <div id="level2" class="hidden">
-    <h2>Rules</h2>
-    <p>1. You can use whatever you want.<br>
-       2. You can't ask me for help.<br>
-       3. There is no time limit.</p>
-    <button id="micBtn">Allow Microphone</button>
-    <button id="continueBtn" class="hidden">Start</button>
-  </div>
+<!-- Level 2: Rules + mic permission -->
+<div id="level2" class="hidden">
+  <h2>Rules</h2>
+  <p>1. You can use whatever you want.<br>
+     2. You can't ask me for help.<br>
+     3. There is no time limit.</p>
+  <button id="micBtn">Allow Microphone</button>
+  <button id="continueBtn" class="hidden">Start</button>
+</div>
 
-  <!-- Level 3: Color input -->
-  <div id="level3" class="hidden" style="background:#00ff66; flex-direction:column;">
-    <input id="colorInput" type="text" placeholder="" />
-    <button id="submitColor">Submit</button>
-  </div>
+<!-- Level 3: Color input -->
+<div id="level3" class="hidden" style="background:#00ff66; flex-direction:column;">
+  <input id="colorInput" type="text" placeholder="" />
+  <button id="submitColor">Submit</button>
+</div>
 
-  <!-- Level 4: Clap detection -->
-  <div id="level4" class="hidden">
-    <h2>👏 Clap to continue...</h2>
-    <p id="clapStatus"></p>
-  </div>
+<!-- Level 4: Clap detection -->
+<div id="level4" class="hidden">
+  <h2>👏 Clap to continue...</h2>
+  <p id="clapStatus"></p>
+</div>
 
-  <!-- Level 5: Success -->
-  <div id="level5" class="hidden">
-    <h2>🎉 You passed the clap level!</h2>
-  </div>
+<!-- Level 5: Success -->
+<div id="level5" class="hidden">
+  <h2>🎉 You passed the clap level!</h2>
+</div>
 
-  <script>
-    const l1 = document.getElementById("level1");
-    const l2 = document.getElementById("level2");
-    const l3 = document.getElementById("level3");
-    const l4 = document.getElementById("level4");
-    const l5 = document.getElementById("level5");
-    const startBtn = document.getElementById("startBtn");
-    const micBtn = document.getElementById("micBtn");
-    const continueBtn = document.getElementById("continueBtn");
-    const submitColor = document.getElementById("submitColor");
-    const colorInput = document.getElementById("colorInput");
-    const clapStatus = document.getElementById("clapStatus");
+<script>
+const l1 = document.getElementById("level1");
+const l2 = document.getElementById("level2");
+const l3 = document.getElementById("level3");
+const l4 = document.getElementById("level4");
+const l5 = document.getElementById("level5");
+const startBtn = document.getElementById("startBtn");
+const micBtn = document.getElementById("micBtn");
+const continueBtn = document.getElementById("continueBtn");
+const submitColor = document.getElementById("submitColor");
+const colorInput = document.getElementById("colorInput");
+const clapStatus = document.getElementById("clapStatus");
 
-    let audioContext, micStream, analyser, dataArray;
+let audioContext, micStream, analyser, dataArray;
+const targetColor = '#00ff66';
+let clapCount = 0;
 
-    const targetColor = '#00ff66'; // Fixed color
-    const requiredClaps = 2; // Number of claps needed
-    let clapCount = 0;
+// --- Level 1 ---
+startBtn.onclick = () => {
+  l1.classList.add("hidden");
+  l2.classList.remove("hidden");
+};
 
-    // --- Level 1 ---
-    startBtn.onclick = () => {
-      l1.classList.add("hidden");
-      l2.classList.remove("hidden");
-    };
+// --- Level 2: Mic permission ---
+micBtn.onclick = async () => {
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioContext.createMediaStreamSource(micStream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 512;
+    dataArray = new Uint8Array(analyser.fftSize);
+    source.connect(analyser);
 
-    // --- Level 2: Mic permission ---
-    micBtn.onclick = async () => {
-      try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const source = audioContext.createMediaStreamSource(micStream);
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 512;
-        dataArray = new Uint8Array(analyser.fftSize);
-        source.connect(analyser);
+    // Hide mic button, show Start button
+    micBtn.classList.add("hidden");
+    continueBtn.classList.remove("hidden");
+  } catch (err) {
+    console.error(err);
+    alert("Microphone access denied or unavailable.");
+  }
+};
 
-        micBtn.textContent = "Microphone allowed ✅";
-        continueBtn.classList.remove("hidden");
-      } catch (err) {
-        micBtn.textContent = "Permission denied ❌";
-        console.error(err);
-      }
-    };
+continueBtn.onclick = () => {
+  l2.classList.add("hidden");
+  l3.classList.remove("hidden");
+};
 
-    continueBtn.onclick = () => {
-      l2.classList.add("hidden");
-      l3.classList.remove("hidden");
-    };
+// --- Level 3: Color input ---
+submitColor.onclick = () => {
+  const guess = colorInput.value.trim();
+  const normalized = guess.startsWith('#') ? guess : '#' + guess;
+  if (normalized.toLowerCase() === targetColor.toLowerCase()) {
+    l3.classList.add("hidden");
+    l4.classList.remove("hidden");
+    startClapDetection();
+  } else {
+    alert("❌ Wrong color! Try again.");
+  }
+};
 
-    // --- Level 3: Color input ---
-    submitColor.onclick = () => {
-      const guess = colorInput.value.trim();
-      const normalized = guess.startsWith('#') ? guess : '#' + guess;
-      if (normalized.toLowerCase() === targetColor.toLowerCase()) {
-        // Correct! Go to Level 4
-        l3.classList.add("hidden");
-        l4.classList.remove("hidden");
-        startClapDetection();
-      } else {
-        alert("❌ Wrong color! Try again.");
-      }
-    };
+// --- Level 4: Clap detection ---
+function startClapDetection() {
+  if (!analyser) return;
 
-    // --- Level 4: Clap detection ---
-    function startClapDetection() {
-      if (!analyser) {
-        clapStatus.textContent = "Microphone not active.";
-        return;
-      }
+  clapCount = 0;
+  let lastClapTime = 0;
+  const requiredClaps = 2;
+  const clapCooldown = 400; // minimum time between claps in ms
 
-      clapCount = 0;
-      let lastClap = 0;
-
-      function detectClap() {
-        analyser.getByteTimeDomainData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          const v = (dataArray[i] - 128) / 128;
-          sum += v * v;
-        }
-        const rms = Math.sqrt(sum / dataArray.length);
-        const now = Date.now();
-
-        if (rms > 0.25 && now - lastClap > 300) { // threshold & debounce
-          lastClap = now;
-          clapCount++;
-          clapStatus.textContent = `👏 Clap detected! (${clapCount}/${requiredClaps})`;
-
-          if (clapCount >= requiredClaps) {
-            setTimeout(() => {
-              l4.classList.add("hidden");
-              l5.classList.remove("hidden");
-            }, 500);
-          }
-        }
-        requestAnimationFrame(detectClap);
-      }
-      detectClap();
+  function detectClap() {
+    analyser.getByteTimeDomainData(dataArray);
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      const v = (dataArray[i] - 128) / 128;
+      sum += v * v;
     }
-  </script>
+    const rms = Math.sqrt(sum / dataArray.length);
+    const now = Date.now();
+    const threshold = 0.12; // Adjust for phone sensitivity
+
+    if (rms > threshold && now - lastClapTime > clapCooldown) {
+      lastClapTime = now;
+      clapCount++;
+      clapStatus.textContent = `👏 Clap detected! (${clapCount}/${requiredClaps})`;
+
+      if (clapCount >= requiredClaps) {
+        setTimeout(() => {
+          l4.classList.add("hidden");
+          l5.classList.remove("hidden");
+        }, 500);
+      }
+    }
+
+    requestAnimationFrame(detectClap);
+  }
+
+  detectClap();
+}
+</script>
 
 </body>
 </html>
