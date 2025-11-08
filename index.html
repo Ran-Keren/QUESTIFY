@@ -16,7 +16,7 @@
     touch-action:none;
   }
   
-  #level1, #level2, #level3, #level4, #level5, #level6 {
+  #level1, #level2, #level3, #level4, #level5, #level6, #level7 {
     position:absolute;
     top:0; left:0;
     width:100%; height:100%;
@@ -28,6 +28,7 @@
   #level4 { background:#f0f0f0; }
   #level5 { background:#fffae0; }
   #level6 { background:#cce7ff; }
+  #level7 { background:#ffe0cc; }
 
   .hidden { display:none !important; }
   button {
@@ -44,23 +45,19 @@
     border-radius:10px; border:2px solid #333;
     text-align:center; width:180px;
   }
-  #logo { max-width:40%; height:auto; }
+  #logo {
+    max-width:40%;
+    height:auto;
+  }
   #level2 p { font-size:1.5rem; }
   #riddleText { font-size:1rem; }
   #level5 img {
     max-width:80%; max-height:80%;
     border-radius:20px; box-shadow:0 0 20px rgba(0,0,0,0.2);
   }
-  #deterrentNotice {
-    position:fixed; top:10px; left:50%; transform:translateX(-50%);
-    background:#e94e77; color:white; padding:8px 16px; border-radius:10px;
-    display:none; z-index:9999; font-weight:bold;
-  }
 </style>
 </head>
 <body>
-
-<div id="deterrentNotice"></div>
 
 <!-- Level 1 -->
 <div id="level1">
@@ -106,19 +103,25 @@
 
 <!-- Level 6 -->
 <div id="level6" class="hidden">
-  <p>Enter a 4-digit (or larger) number.</p>
-
-  <input id="modInput" type="number" placeholder="Enter number">
-  <button id="checkMod">Generate</button>
-  <p id="modResult" style="margin-top:10px;font-weight:bold;"></p>
-
-  <hr style="width:60%;margin:25px 0;">
-
-  <input id="modGuess" type="number" placeholder="Your guess">
-  <button id="submitModGuess">Submit</button>
-  <p id="modGuessMessage" style="margin-top:10px;font-weight:bold;"></p>
+  <h2>Level 6: Modulo Riddle</h2>
+  <button id="generateMod">Generate New Prime Modulo</button>
+  <p>Enter a number of at least 4 digits:</p>
+  <input id="modInput" placeholder="Your number" />
+  <button id="checkMod">Check Modulo</button>
+  <p id="modResult" style="margin-top:10px; font-weight:bold;"></p>
+  <p>Guess the secret modulo number:</p>
+  <input id="modGuess" placeholder="Your guess" />
+  <button id="submitModGuess">Submit Guess</button>
+  <p id="modGuessMessage" style="font-weight:bold;margin-top:10px;"></p>
 </div>
 
+<!-- Level 7 -->
+<div id="level7" class="hidden">
+  <h2>Level 7: To Be Continued...</h2>
+  <p>The adventure continues in the next chapter!</p>
+</div>
+
+<!-- EmailJS SDK -->
 <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
 (function(){ emailjs.init("YOUR_USER_ID"); })(); // Replace with your EmailJS User ID
@@ -131,6 +134,7 @@ const l3 = document.getElementById("level3");
 const l4 = document.getElementById("level4");
 const l5 = document.getElementById("level5");
 const l6 = document.getElementById("level6");
+const l7 = document.getElementById("level7");
 
 const startBtn = document.getElementById("startBtn");
 const micBtn = document.getElementById("micBtn");
@@ -143,6 +147,7 @@ const secretInput = document.getElementById("secretInput");
 const checkSecret = document.getElementById("checkSecret");
 const secretMessage = document.getElementById("secretMessage");
 
+const generateMod = document.getElementById("generateMod");
 const modInput = document.getElementById("modInput");
 const checkMod = document.getElementById("checkMod");
 const modResult = document.getElementById("modResult");
@@ -224,32 +229,33 @@ submitColor.onclick = () => {
 // --- Level 4: Clap detection ---
 function startClapDetection() {
   if (!analyser) return;
-
   let lastClapTime = 0;
   const doubleClapInterval = 600;
   const debounceTime = 250;
   let clapSequenceStartTime = 0;
   let clapsInSequence = 0;
+
   const threshold = 0.20;
   const spikeMultiplier = 2.2;
   let peakHistory = [];
 
   function detectClap() {
     analyser.getByteTimeDomainData(dataArray);
-    let sum=0, peak=0;
-    for(let i=0;i<dataArray.length;i++){
+    let sum = 0, peak = 0;
+    for (let i=0;i<dataArray.length;i++){
       const v=(dataArray[i]-128)/128;
       sum+=v*v;
       peak=Math.max(peak,Math.abs(v));
     }
     const rms=Math.sqrt(sum/dataArray.length);
     const now=Date.now();
+
     peakHistory.push(peak);
-    if(peakHistory.length>5) peakHistory.shift();
+    if (peakHistory.length>5) peakHistory.shift();
     const avgPeak = peakHistory.reduce((a,b)=>a+b,0)/peakHistory.length;
     const isSuddenSpike = peak>avgPeak*spikeMultiplier;
 
-    if(rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime){
+    if (rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime) {
       lastClapTime=now;
       if(clapsInSequence===0){
         clapsInSequence=1;
@@ -259,6 +265,7 @@ function startClapDetection() {
           clapsInSequence=2;
           clapStatus.textContent="👏 Clap detected!";
           cancelAnimationFrame(animationFrameId);
+
           l4.classList.add("hidden");
           l5.classList.remove("hidden");
           updateLevel5Image();
@@ -280,7 +287,6 @@ function startClapDetection() {
       animationFrameId=requestAnimationFrame(detectClap);
     }
   }
-
   detectClap();
 }
 
@@ -291,33 +297,26 @@ function updateLevel5Image() {
   const index = Math.floor((minute % 40) / 10) % 4;
   level5Image.src = level5Images[index];
 }
-setInterval(() => { if(!l5.classList.contains("hidden")) updateLevel5Image(); },60000);
+setInterval(() => {
+  if (!l5.classList.contains("hidden")) updateLevel5Image();
+}, 60000);
 
 checkSecret.onclick = () => {
   const input = secretInput.value.trim().toLowerCase();
-  if(input==="continue"){
-    secretMessage.textContent="✅ Correct! Moving to Level 6...";
-    setTimeout(()=>{ l5.classList.add("hidden"); l6.classList.remove("hidden"); sendLevelEmail(6); },1000);
-  } else { secretMessage.textContent="Try again"; }
+  if (input === "continue") {
+    secretMessage.textContent = "✅ Correct! Moving to Level 6...";
+    setTimeout(() => {
+      l5.classList.add("hidden");
+      l6.classList.remove("hidden");
+      sendLevelEmail(6);
+    }, 1000);
+  } else {
+    secretMessage.textContent = "Try again";
+  }
 };
-<!-- Level 6: Modulo Riddle -->
-<div id="level6" class="hidden">
-  <h2>Level 6: Modulo Riddle</h2>
-  <button id="generateMod">Generate New Prime Modulo</button>
-  <p>Enter a number of at least 4 digits:</p>
-  <input id="modInput" placeholder="Your number" />
-  <button id="checkMod">Check Modulo</button>
-  <p id="modResult" style="margin-top:10px; font-weight:bold;"></p>
-  <p>Guess the secret modulo number:</p>
-  <input id="modGuess" placeholder="Your guess" />
-  <button id="submitModGuess">Submit Guess</button>
-  <p id="modGuessMessage" style="font-weight:bold;margin-top:10px;"></p>
-</div>
 
-<script>
+// ---------- Level 6: Modulo Riddle ----------
 let secretMod;
-
-// --- Generate random prime under 1000 ---
 function generateRandomPrimeUnder1000() {
   const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
     101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199,
@@ -331,7 +330,6 @@ function generateRandomPrimeUnder1000() {
   return primes[Math.floor(Math.random() * primes.length)];
 }
 
-// --- Prepare Level 6 ---
 function prepareLevel6() {
   secretMod = generateRandomPrimeUnder1000();
   modResult.textContent = "";
@@ -340,13 +338,11 @@ function prepareLevel6() {
   modGuess.value = "";
 }
 
-// --- Generate new modulo on button ---
-document.getElementById("generateMod").onclick = () => {
+generateMod.onclick = () => {
   prepareLevel6();
   alert("A new prime modulo has been generated!");
 };
 
-// --- Check modulo (just validation, no remainder shown) ---
 checkMod.onclick = () => {
   const val = parseInt(modInput.value.trim());
   if (isNaN(val) || val < 1000) {
@@ -356,7 +352,6 @@ checkMod.onclick = () => {
   modResult.textContent = "Your number is valid. Now guess the modulo!";
 };
 
-// --- Submit guess ---
 submitModGuess.onclick = () => {
   const guess = parseInt(modGuess.value.trim());
   if (guess === secretMod) {
@@ -372,35 +367,41 @@ submitModGuess.onclick = () => {
     modGuessMessage.style.color = "red";
   }
 };
-</script>
-
 
 // ---------- deterrent measures ----------
-const deterrentNotice = document.getElementById('deterrentNotice');
-let deterrentTimeout=null;
-function showDeterrentMessage(msg){
+const deterrentNotice = document.createElement('div');
+deterrentNotice.style.position='fixed';
+deterrentNotice.style.bottom='20px';
+deterrentNotice.style.left='50%';
+deterrentNotice.style.transform='translateX(-50%)';
+deterrentNotice.style.background='rgba(0,0,0,0.7)';
+deterrentNotice.style.color='white';
+deterrentNotice.style.padding='10px 20px';
+deterrentNotice.style.borderRadius='10px';
+deterrentNotice.style.display='none';
+document.body.appendChild(deterrentNotice);
+
+let deterrentTimeout = null;
+function showDeterrentMessage(msg) {
   deterrentNotice.textContent = msg || 'Action blocked — this is a protected experience.';
-  deterrentNotice.style.display='block';
+  deterrentNotice.style.display = 'block';
   clearTimeout(deterrentTimeout);
-  deterrentTimeout=setTimeout(()=>{ deterrentNotice.style.display='none'; },2400);
+  deterrentTimeout = setTimeout(() => {
+    deterrentNotice.style.display = 'none';
+  }, 2400);
 }
 
-document.addEventListener('contextmenu', e=>{ e.preventDefault(); showDeterrentMessage('Right-click is disabled on this page.'); });
-document.addEventListener('keydown', e=>{
-  const ctrl=e.ctrlKey||e.metaKey;
-  const shift=e.shiftKey;
-  const key=e.key?e.key.toLowerCase():'';
-  if(e.key==='F12'){ e.preventDefault(); showDeterrentMessage('This action is disabled.'); return false; }
-  if(ctrl && shift && (key==='i'||key==='j'||key==='c')){ e.preventDefault(); showDeterrentMessage('Opening developer tools is disabled.'); return false; }
-  if(ctrl && key==='u'){ e.preventDefault(); showDeterrentMessage('Viewing source is disabled.'); return false; }
-  if(ctrl && key==='s'){ e.preventDefault(); showDeterrentMessage('Saving this page is disabled.'); return false; }
-  if(ctrl && shift && (key==='c'||key==='k')){ e.preventDefault(); showDeterrentMessage('This action is disabled.'); return false; }
-  if((ctrl && shift && key==='r') || e.key==='F5'){ e.preventDefault(); showDeterrentMessage('Reload disabled.'); return false; }
+document.addEventListener('contextmenu', e => { e.preventDefault(); showDeterrentMessage('Right-click is disabled.'); });
+document.addEventListener('keydown', e => {
+  const ctrl = e.ctrlKey || e.metaKey; const shift = e.shiftKey; const key = e.key.toLowerCase();
+  if (e.key==='F12' || (ctrl && shift && ['i','j','c','k','r'].includes(key)) || (ctrl && ['u','s'].includes(key))) {
+    e.preventDefault(); showDeterrentMessage('This action is disabled.'); return false;
+  }
 });
-document.addEventListener('selectstart', e=>e.preventDefault());
-document.addEventListener('dragstart', e=>e.preventDefault());
+document.addEventListener('selectstart', e => e.preventDefault());
+document.addEventListener('dragstart', e => e.preventDefault());
+window.addEventListener('blur', () => { showDeterrentMessage('Focus lost — please stay in the game.'); });
 
 </script>
-
 </body>
 </html>
