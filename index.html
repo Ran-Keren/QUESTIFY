@@ -97,10 +97,9 @@ input {
 
 <div id="level6" class="hidden">
     <h2>Level 6: Modulo Riddle</h2>
-    <button id="generateMod">Generate New Prime Modulo</button>
     <p>Enter a number of at least 4 digits:</p>
     <input id="modInput" placeholder="Your number" />
-    <button id="checkMod">Check Modulo</button>
+    <button id="checkMod">Get Remainder</button>
     <p id="modResult" style="margin-top:10px; font-weight:bold;"></p>
     <p>Guess the secret modulo number:</p>
     <input id="modGuess" placeholder="Your guess" />
@@ -137,14 +136,14 @@ input {
     const secretInput = document.getElementById("secretInput");
     const checkSecret = document.getElementById("checkSecret");
     const secretMessage = document.getElementById("secretMessage");
-    const generateMod = document.getElementById("generateMod");
+    // const generateMod = document.getElementById("generateMod"); // REMOVED
     const modInput = document.getElementById("modInput");
     const checkMod = document.getElementById("checkMod");
     const modResult = document.getElementById("modResult");
     const modGuess = document.getElementById("modGuess");
     const submitModGuess = document.getElementById("submitModGuess");
     const modGuessMessage = document.getElementById("modGuessMessage");
-    const level7Message = document.getElementById("level7Message"); // New element
+    const level7Message = document.getElementById("level7Message");
 
     let audioContext, micStream, analyser, dataArray;
     let animationFrameId;
@@ -158,7 +157,7 @@ input {
 
     // --- Global Modulo Variable ---
     let secretMod;
-    let finalRemainder = 0; // Stores the remainder for Level 7
+    let finalRemainder = 0;
 
     // --- Email function ---
     function sendLevelEmail(levelNumber) {
@@ -261,7 +260,7 @@ input {
                         l4.classList.add("hidden");
                         l5.classList.remove("hidden");
                         updateLevel5Image();
-                        sendLevelEmail(4); // NOTE: Changed to 4 since it was 5 previously
+                        sendLevelEmail(4);
                         return;
                     } else {
                         clapsInSequence=1;
@@ -299,7 +298,7 @@ input {
             setTimeout(() => {
                 l5.classList.add("hidden");
                 l6.classList.remove("hidden");
-                sendLevelEmail(5); // NOTE: Changed to 5 since it was 6 previously
+                sendLevelEmail(5);
                 prepareLevel6(); // Initialize Level 6
             }, 1000);
         } else {
@@ -307,7 +306,7 @@ input {
         }
     };
 
-    // ---------- Level 6: Modulo Riddle (UPDATED) ----------
+    // ---------- Level 6: Modulo Riddle (FINAL UPDATE) ----------
     function generateRandomPrimeUnder1000() {
         const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997 ];
         return primes[Math.floor(Math.random() * primes.length)];
@@ -319,14 +318,10 @@ input {
         modGuessMessage.textContent = "";
         modInput.value = "";
         modGuess.value = "";
-        finalRemainder = 0; // Reset remainder
-        // console.log("New Secret Modulo:", secretMod); // For testing only
+        finalRemainder = 0;
     }
 
-    generateMod.onclick = () => {
-        prepareLevel6();
-        alert("A new prime modulo has been generated!");
-    };
+    // REMOVED: generateMod.onclick because it is no longer needed
 
     checkMod.onclick = () => {
         const val = parseInt(modInput.value.trim());
@@ -343,6 +338,7 @@ input {
 
     submitModGuess.onclick = () => {
         const guess = parseInt(modGuess.value.trim());
+        
         if (guess === secretMod) {
             modGuessMessage.textContent = "✅ Correct! Moving to Level 7...";
             modGuessMessage.style.color = "green";
@@ -357,11 +353,14 @@ input {
             setTimeout(() => {
                 l6.classList.add("hidden");
                 l7.classList.remove("hidden");
-                sendLevelEmail(6); // NOTE: Changed to 6 since it was 7 previously
+                sendLevelEmail(6);
             }, 1000);
         } else {
             modGuessMessage.textContent = "Try again.";
             modGuessMessage.style.color = "red";
+            
+            // NEW REQUIREMENT: Generate a new modulo after an incorrect guess
+            prepareLevel6(); 
         }
     };
     
@@ -378,7 +377,7 @@ input {
     deterrentNotice.style.padding='10px 20px';
     deterrentNotice.style.borderRadius='10px';
     deterrentNotice.style.display='none';
-    document.body.appendChild(deterrentNotice);
+    document.body.appendChild(deter deterrentNotice);
     let deterrentTimeout = null;
 
     function showDeterrentMessage(msg) {
