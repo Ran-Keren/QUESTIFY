@@ -129,12 +129,12 @@ submitColor.onclick = () => {
 function startClapDetection() {
   if (!analyser) return;
 
-  clapCount = 0;
   let lastClapTime = 0;
-  const requiredClaps = 2;
-  const clapCooldown = 400; // minimum time between claps in ms
+  const clapInterval = 1000; // maximum time between claps in ms
+  let firstClapTime = 0;
+  let clapDetected = false;
 
-  function detectClap() {
+  function detectDoubleClap() {
     analyser.getByteTimeDomainData(dataArray);
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
@@ -143,26 +143,35 @@ function startClapDetection() {
     }
     const rms = Math.sqrt(sum / dataArray.length);
     const now = Date.now();
-    const threshold = 0.12; // Adjust for phone sensitivity
+    const threshold = 0.12; // adjust sensitivity
 
-    if (rms > threshold && now - lastClapTime > clapCooldown) {
+    if (rms > threshold && now - lastClapTime > 200) { // debounce 200ms
       lastClapTime = now;
-      clapCount++;
-      clapStatus.textContent = `👏 Clap detected! (${clapCount}/${requiredClaps})`;
 
-      if (clapCount >= requiredClaps) {
+      if (firstClapTime === 0) {
+        firstClapTime = now;
+        clapStatus.textContent = "👏 First clap detected!";
+      } else if (now - firstClapTime <= clapInterval) {
+        clapDetected = true;
+        clapStatus.textContent = "👏 Double clap detected!";
         setTimeout(() => {
           l4.classList.add("hidden");
           l5.classList.remove("hidden");
         }, 500);
+        return;
+      } else {
+        // too slow, reset first clap
+        firstClapTime = now;
+        clapStatus.textContent = "👏 First clap detected!";
       }
     }
 
-    requestAnimationFrame(detectClap);
+    if (!clapDetected) requestAnimationFrame(detectDoubleClap);
   }
 
-  detectClap();
+  detectDoubleClap();
 }
+
 </script>
 
 </body>
