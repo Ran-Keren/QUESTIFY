@@ -156,8 +156,11 @@ micBtn.onclick = async () => {
     micBtn.classList.add("hidden");
     continueBtn.classList.remove("hidden");
   } catch (err) {
-    console.error(err);
-    alert("Microphone access denied or unavailable.");
+    console.warn("No microphone detected or access denied. Skipping mic activation.", err);
+    alert("No microphone detected. You can continue without it.");
+    // Show continue button anyway
+    micBtn.classList.add("hidden");
+    continueBtn.classList.remove("hidden");
   }
 };
 
