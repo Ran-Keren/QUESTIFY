@@ -10,8 +10,15 @@
     height:100%; width:100%;
     display:flex; justify-content:center; align-items:center;
     font-family:Arial, sans-serif; text-align:center;
-    background:#fff; color:#222; flex-direction:column;
+    background:#fff; /* Default white background */
+    color:#222; flex-direction:column;
   }
+  
+  /* Apply the specific green screen color only to Level 3 container */
+  #level3 {
+      background: #00ff66; /* Target color for the puzzle */
+  }
+
   .hidden { display:none; }
   button {
     margin-top:20px;
@@ -26,14 +33,6 @@
     font-size:1.2rem; padding:10px;
     border-radius:10px; border:2px solid #333;
     text-align:center; width:150px;
-  }
-  #level3 {
-    position: absolute;
-    top:0; left:0; right:0; bottom:0;
-    background:#00ff66;
-    display:flex; justify-content:center; align-items:center;
-    flex-direction:column;
-    z-index:0;
   }
 </style>
 </head>
@@ -53,14 +52,14 @@
   <button id="continueBtn" class="hidden">Start</button>
 </div>
 
-<div id="level3" class="hidden">
+<div id="level3" class="hidden" style="flex-direction:column;">
   <input id="colorInput" type="text" placeholder="" />
   <button id="submitColor">Submit</button>
 </div>
 
 <div id="level4" class="hidden">
-  <h2>👏 Double tap (clap) to continue...</h2>
-  <p id="clapStatus"></p>
+  <h2>👏 Double Clap to continue...</h2>
+  <p id="clapStatus">A double clap will unlock the next level.</p>
 </div>
 
 <div id="level5" class="hidden">
@@ -81,7 +80,9 @@ const colorInput = document.getElementById("colorInput");
 const clapStatus = document.getElementById("clapStatus");
 
 let audioContext, micStream, analyser, dataArray;
-const targetColor = '#00ff66';
+// Target color is the background of level 3
+const targetColor = '#00ff66'; 
+let animationFrameId; // To stop the detection loop
 
 // --- Level 1 ---
 startBtn.onclick = () => {
@@ -100,8 +101,10 @@ micBtn.onclick = async () => {
     dataArray = new Uint8Array(analyser.fftSize);
     source.connect(analyser);
 
+    // Hide mic button, show Start button
     micBtn.classList.add("hidden");
     continueBtn.classList.remove("hidden");
+    clapStatus.textContent = "Microphone ready. Start the game.";
   } catch (err) {
     console.error(err);
     alert("Microphone access denied or unavailable.");
@@ -111,74 +114,98 @@ micBtn.onclick = async () => {
 continueBtn.onclick = () => {
   l2.classList.add("hidden");
   l3.classList.remove("hidden");
+  colorInput.focus(); // Focus on the input for easier play
 };
 
 // --- Level 3: Color input ---
 submitColor.onclick = () => {
   const guess = colorInput.value.trim();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
+  // Check if the input matches the background color of level 3
   if (normalized.toLowerCase() === targetColor.toLowerCase()) {
     l3.classList.add("hidden");
     l4.classList.remove("hidden");
     startClapDetection();
   } else {
-    // Clear input silently for another attempt
-    colorInput.value = '';
+    alert("❌ Wrong color! Try again.");
   }
 };
 
-// --- Level 4: Robust double clap detection ---
+// --- Level 4: Clap detection (Strict double clap logic) ---
 function startClapDetection() {
   if (!analyser) return;
 
-  let lastTapTime = 0;
-  let firstTapTime = 0;
-  let noisyCount = 0;
-  let quietCount = 0;
-  const MAX_TAP_BLOCKS = 3; // max blocks for a single tap
-  const THRESHOLD = 0.12;
-  const TAP_INTERVAL = 1000; // max time between taps
+  let lastClapTime = 0;
+  // Shorter interval for a *double* clap
+  const doubleClapInterval = 600; 
+  const debounceTime = 200; // time in ms to ignore noise after a clap
+  let clapSequenceStartTime = 0;
+  let clapsInSequence = 0;
+  
+  // Adjusted for double clap
+  const threshold = 0.15; // adjust sensitivity
 
-  function detect() {
+  function detectClap() {
     analyser.getByteTimeDomainData(dataArray);
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
       const v = (dataArray[i] - 128) / 128;
-      sum += v*v;
+      sum += v * v;
     }
     const rms = Math.sqrt(sum / dataArray.length);
     const now = Date.now();
 
-    if (rms > THRESHOLD) {
-      noisyCount++;
-      quietCount = 0;
-    } else {
-      if (noisyCount > 0 && noisyCount <= MAX_TAP_BLOCKS) {
-        // Valid tap detected
-        if (firstTapTime === 0) {
-          firstTapTime = now;
-          clapStatus.textContent = "👏 First clap detected!";
-        } else if (now - firstTapTime <= TAP_INTERVAL) {
-          clapStatus.textContent = "👏 Double clap detected!";
+    if (rms > threshold && now - lastClapTime > debounceTime) {
+      // --- CLAP DETECTED ---
+      lastClapTime = now;
+      
+      if (clapsInSequence === 0) {
+        // First clap in a new sequence
+        clapsInSequence = 1;
+        clapSequenceStartTime = now;
+        clapStatus.textContent = "👏 First clap detected! Clap again quickly...";
+      } else if (clapsInSequence === 1) {
+        // Second clap! Check timing.
+        if (now - clapSequenceStartTime <= doubleClapInterval) {
+          // SUCCESSFUL DOUBLE CLAP
+          clapsInSequence = 2; // Mark as done
+          clapStatus.textContent = "🎉 Double clap detected! Level passed!";
+          
+          // Stop the detection loop
+          cancelAnimationFrame(animationFrameId);
+          
+          // Move to success screen
           setTimeout(() => {
             l4.classList.add("hidden");
             l5.classList.remove("hidden");
           }, 500);
-          return; // stop detection
+          return; // Exit the function to prevent further calls
         } else {
-          firstTapTime = now;
-          clapStatus.textContent = "👏 First clap detected!";
+          // Second clap was too slow, restart the sequence
+          clapsInSequence = 1;
+          clapSequenceStartTime = now;
+          clapStatus.textContent = "👏 Too slow! First clap detected again. Clap quickly!";
         }
       }
-      noisyCount = 0;
-      quietCount++;
     }
 
-    requestAnimationFrame(detect);
+    // Reset sequence if too much time passes since the first clap
+    if (clapsInSequence === 1 && now - clapSequenceStartTime > doubleClapInterval) {
+        clapsInSequence = 0;
+        clapSequenceStartTime = 0;
+        clapStatus.textContent = "A double clap will unlock the next level.";
+    }
+
+    // Continue the loop if the level hasn't been passed
+    if (clapsInSequence !== 2) {
+        animationFrameId = requestAnimationFrame(detectClap);
+    }
   }
 
-  detect();
+  // Start the loop
+  detectClap();
 }
+
 </script>
 
 </body>
