@@ -8,65 +8,43 @@
   html, body {
     margin:0; padding:0;
     height:100%; width:100%;
-    font-family: Arial, sans-serif;
     display:flex; justify-content:center; align-items:center;
+    font-family:Arial, sans-serif; text-align:center;
     background:#fff;
-    color:#222;
-    flex-direction:column;
-    text-align:center;
-    overflow:hidden;
+    color:#222; flex-direction:column;
   }
-
+  
   #level1, #level2, #level3, #level4, #level5 {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
-    justify-content: center; align-items: center;
+    justify-content: center;
+    align-items: center;
     flex-direction: column;
-    padding: 2%;
-    box-sizing: border-box;
   }
-
+  
+  /* Level 3 fixed background */
   #level3 { background: #00ff66; }
   #level4 { background: #f0f0f0; }
   #level5 { background: #fffae0; }
 
   .hidden { display:none !important; }
-
   button {
     margin-top:20px;
-    padding:1% 2%;
-    font-size:2vw;
-    min-width:120px;
+    padding:10px 20px;
+    font-size:1.2rem;
     border:none; border-radius:10px;
     background:#e94e77; color:white;
     cursor:pointer;
   }
   button:hover { background:#c53e63; }
-
   input {
-    font-size:2vw;
-    padding:1%;
+    font-size:1.2rem; padding:10px;
     border-radius:10px; border:2px solid #333;
-    text-align:center;
-    width:30%;
-    min-width:120px;
-  }
-
-  h2 {
-    font-size:3vw;
-    line-height:1.2em;
-  }
-
-  p {
-    font-size:2vw;
-  }
-
-  #photoPlaceholder {
-    font-size:3vw;
-    font-weight:bold;
-    margin-top:2%;
+    text-align:center; width:150px;
   }
 </style>
 </head>
@@ -74,7 +52,7 @@
 
 <!-- Level 1 -->
 <div id="level1">
-  <div style="font-size:5vw; color:red; font-weight:bold;">🔒 Questify</div>
+  <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
   <button id="startBtn">Let's Start</button>
 </div>
 
@@ -102,7 +80,7 @@
     Tribute and reverence choreograph the way
   </h2>
   <p id="clapStatus"></p>
-  <div id="photoPlaceholder"></div>
+  <div id="photoPlaceholder" style="margin-top:20px; font-size:2rem; font-weight:bold;"></div>
 </div>
 
 <!-- Level 5 -->
@@ -113,7 +91,7 @@
 <!-- EmailJS SDK -->
 <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
-(function(){ emailjs.init("YOUR_USER_ID"); })();
+(function(){ emailjs.init("YOUR_USER_ID"); })(); // Replace with your EmailJS User ID
 </script>
 
 <script>
@@ -135,6 +113,7 @@ let animationFrameId;
 
 const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
 
+// --- Email function ---
 function sendLevelEmail(levelNumber) {
   emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
     level: levelNumber,
@@ -146,13 +125,13 @@ function sendLevelEmail(levelNumber) {
   );
 }
 
-// Level 1
+// --- Level 1 ---
 startBtn.onclick = () => {
   l1.classList.add("hidden");
   l2.classList.remove("hidden");
 };
 
-// Level 2
+// --- Level 2 ---
 micBtn.onclick = async () => {
   try {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -177,10 +156,11 @@ continueBtn.onclick = () => {
   colorInput.focus();
 };
 
-// Level 3
+// --- Level 3 ---
 submitColor.onclick = () => {
   const guess = colorInput.value.trim().toLowerCase();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
+
   const isCorrect = allowedColors.some(c => c.replace('#','').toLowerCase() === normalized.replace('#',''));
   if (isCorrect) {
     l3.classList.add("hidden");
@@ -192,7 +172,7 @@ submitColor.onclick = () => {
   }
 };
 
-// Level 4 Clap Detection
+// --- Level 4: Clap Detection ---
 function startClapDetection() {
   if (!analyser) return;
 
@@ -234,13 +214,13 @@ function startClapDetection() {
           clapStatus.textContent="👏 Clap detected!";
           cancelAnimationFrame(animationFrameId);
 
-          // Show current hour as photo placeholder
+          // Display the "photo" - current hour
           const hour = new Date().getHours();
           photoPlaceholder.textContent = "🖼 Hour: " + hour;
 
           sendLevelEmail(4);
 
-          // Wait 2 seconds then show Level 5
+          // Wait 2 seconds then go to Level 5
           setTimeout(()=>{
             l4.classList.add("hidden");
             l5.classList.remove("hidden");
