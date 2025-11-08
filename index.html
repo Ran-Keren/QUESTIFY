@@ -81,7 +81,7 @@ input { font-size:1.2rem; padding:10px; border-radius:10px; border:2px solid #33
     <input id="modInput" placeholder="Your number" />
     <button id="checkMod">Generate</button>
     <p id="modResult" style="margin-top:10px; font-weight:bold;"></p>
-    <p>Guess the secret modulo number:</p>
+    <p>Guess the number:</p>
     <input id="modGuess" placeholder="Your guess" />
     <button id="submitModGuess">Submit Guess</button>
     <p id="modGuessMessage" style="font-weight:bold;margin-top:10px;"></p>
@@ -325,7 +325,7 @@ checkMod.onclick = () => {
     const val = parseInt(modInput.value.trim());
     if (!isNaN(val) && val >= 1000) {
         modPressCount++;
-        if(modPressCount >= 2){
+        if(modPressCount >= 1){
             secretMod = generateRandomPrimeUnder1000();
             modPressCount = 0;
         }
