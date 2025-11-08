@@ -10,11 +10,10 @@
     height:100%; width:100%;
     display:flex; justify-content:center; align-items:center;
     font-family:Arial, sans-serif; text-align:center;
-    background:#fff; /* Default white background */
+    background:#fff;
     color:#222; flex-direction:column;
   }
   
-  /* Each level should fill the entire screen */
   #level1, #level2, #level3, #level4, #level5 {
     position: absolute;
     top: 0;
@@ -27,10 +26,7 @@
     flex-direction: column;
   }
   
-  /* Apply the specific green screen color only to Level 3 container */
-  #level3 {
-      background: #00ff66; /* Target color for the puzzle */
-  }
+  #level3 { background: #00ff66; }
 
   .hidden { display:none !important; }
   button {
@@ -79,6 +75,12 @@
   <h2>🎉 You passed the clap level!</h2>
 </div>
 
+<!-- EmailJS SDK -->
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<script>
+(function(){ emailjs.init("YOUR_USER_ID"); })(); // Replace with your EmailJS User ID
+</script>
+
 <script>
 const l1 = document.getElementById("level1");
 const l2 = document.getElementById("level2");
@@ -93,17 +95,28 @@ const colorInput = document.getElementById("colorInput");
 const clapStatus = document.getElementById("clapStatus");
 
 let audioContext, micStream, analyser, dataArray;
-// Target color is the background of level 3
 const targetColor = '#00ff66'; 
-let animationFrameId; // To stop the detection loop
+let animationFrameId;
+
+function sendLevelEmail(levelNumber) {
+  emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+    level: levelNumber,
+    player: "Anonymous",
+    date: new Date().toLocaleString()
+  }).then(
+    response => console.log("Email sent for level " + levelNumber),
+    error => console.error("Email error:", error)
+  );
+}
 
 // --- Level 1 ---
 startBtn.onclick = () => {
   l1.classList.add("hidden");
   l2.classList.remove("hidden");
+  // Email removed for level 1
 };
 
-// --- Level 2: Mic permission ---
+// --- Level 2 ---
 micBtn.onclick = async () => {
   try {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -114,10 +127,8 @@ micBtn.onclick = async () => {
     dataArray = new Uint8Array(analyser.fftSize);
     source.connect(analyser);
 
-    // Hide mic button, show Start button
     micBtn.classList.add("hidden");
     continueBtn.classList.remove("hidden");
-    clapStatus.textContent = "Microphone ready. Start the game.";
   } catch (err) {
     console.error(err);
     alert("Microphone access denied or unavailable.");
@@ -127,95 +138,92 @@ micBtn.onclick = async () => {
 continueBtn.onclick = () => {
   l2.classList.add("hidden");
   l3.classList.remove("hidden");
-  colorInput.focus(); // Focus on the input for easier play
+  colorInput.focus();
+  // Email removed for level 2
 };
 
-// --- Level 3: Color input ---
+// --- Level 3 ---
 submitColor.onclick = () => {
   const guess = colorInput.value.trim();
   const normalized = guess.startsWith('#') ? guess : '#' + guess;
-  // Check if the input matches the background color of level 3
   if (normalized.toLowerCase() === targetColor.toLowerCase()) {
     l3.classList.add("hidden");
     l4.classList.remove("hidden");
+    sendLevelEmail(3); // send email after level 3
     startClapDetection();
-  } else {
-    alert("❌ Wrong color! Try again.");
-  }
+  } 
+  // Removed alert for wrong color
 };
 
-// --- Level 4: Clap detection (Slightly less sensitive) ---
+// --- Level 4: Clap Detection ---
 function startClapDetection() {
   if (!analyser) return;
 
   let lastClapTime = 0;
-  const doubleClapInterval = 600; 
-  const debounceTime = 250; 
+  const doubleClapInterval = 600;
+  const debounceTime = 250;
   let clapSequenceStartTime = 0;
   let clapsInSequence = 0;
 
-  // Slightly harder to trigger than before
-  const threshold = 0.42;         // was 0.35
-  const spikeMultiplier = 2.5;    // was 2
-  let peakHistory = []; 
+  const threshold = 0.35;      // reduced threshold
+  const spikeMultiplier = 2.2; // slightly more sensitive
+  let peakHistory = [];
 
   function detectClap() {
     analyser.getByteTimeDomainData(dataArray);
-    let sum = 0;
-    let peak = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-      const v = (dataArray[i] - 128) / 128;
-      sum += v * v;
-      peak = Math.max(peak, Math.abs(v));
+    let sum = 0, peak = 0;
+    for (let i=0;i<dataArray.length;i++){
+      const v=(dataArray[i]-128)/128;
+      sum+=v*v;
+      peak=Math.max(peak,Math.abs(v));
     }
-    const rms = Math.sqrt(sum / dataArray.length);
-    const now = Date.now();
+    const rms=Math.sqrt(sum/dataArray.length);
+    const now=Date.now();
 
     peakHistory.push(peak);
-    if (peakHistory.length > 5) peakHistory.shift();
+    if (peakHistory.length>5) peakHistory.shift();
+    const avgPeak = peakHistory.reduce((a,b)=>a+b,0)/peakHistory.length;
+    const isSuddenSpike = peak>avgPeak*spikeMultiplier;
 
-    const avgPeak = peakHistory.reduce((a, b) => a + b, 0) / peakHistory.length;
-    const isSuddenSpike = peak > avgPeak * spikeMultiplier;
-
-    if (rms > threshold && isSuddenSpike && now - lastClapTime > debounceTime) {
-      lastClapTime = now;
-
-      if (clapsInSequence === 0) {
-        clapsInSequence = 1;
-        clapSequenceStartTime = now;
-        clapStatus.textContent = "👏 First clap detected! Clap again quickly...";
-      } else if (clapsInSequence === 1) {
-        if (now - clapSequenceStartTime <= doubleClapInterval) {
-          clapsInSequence = 2;
-          clapStatus.textContent = "🎉 Double clap detected! Level passed!";
+    if (rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime) {
+      lastClapTime=now;
+      if(clapsInSequence===0){
+        clapsInSequence=1;
+        clapSequenceStartTime=now;
+        clapStatus.textContent="👏 First clap detected! Clap again quickly...";
+      } else if(clapsInSequence===1){
+        if(now-clapSequenceStartTime<=doubleClapInterval){
+          clapsInSequence=2;
+          clapStatus.textContent="🎉 Double clap detected! Level passed!";
           cancelAnimationFrame(animationFrameId);
-          setTimeout(() => {
+          sendLevelEmail(4); // send email after level 4
+          setTimeout(()=>{
             l4.classList.add("hidden");
             l5.classList.remove("hidden");
-          }, 500);
+            sendLevelEmail(5); // send email after final level
+          },500);
           return;
         } else {
-          clapsInSequence = 1;
-          clapSequenceStartTime = now;
-          clapStatus.textContent = "👏 Too slow! First clap detected again. Clap quickly!";
+          clapsInSequence=1;
+          clapSequenceStartTime=now;
+          clapStatus.textContent="👏 Too slow! First clap detected again. Clap quickly!";
         }
       }
     }
 
-    if (clapsInSequence === 1 && now - clapSequenceStartTime > doubleClapInterval) {
-      clapsInSequence = 0;
-      clapSequenceStartTime = 0;
-      clapStatus.textContent = "A double clap will unlock the next level.";
+    if(clapsInSequence===1 && now-clapSequenceStartTime>doubleClapInterval){
+      clapsInSequence=0;
+      clapSequenceStartTime=0;
+      clapStatus.textContent="A double clap will unlock the next level.";
     }
 
-    if (clapsInSequence !== 2) {
-      animationFrameId = requestAnimationFrame(detectClap);
+    if(clapsInSequence!==2){
+      animationFrameId=requestAnimationFrame(detectClap);
     }
   }
 
   detectClap();
 }
-
 
 </script>
 
