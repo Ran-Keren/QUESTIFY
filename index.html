@@ -6,13 +6,9 @@
 <title>Questify Game</title>
 <style>
 html, body {
-    margin:0;
-    padding:0;
-    height:100%;
-    width:100%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    margin:0; padding:0;
+    height:100%; width:100%;
+    display:flex; justify-content:center; align-items:center;
     font-family:Arial, sans-serif;
     text-align:center;
     background:#fff;
@@ -22,11 +18,8 @@ html, body {
     touch-action:none;
 }
 #level1, #level2, #level3, #level4, #level5, #level6, #level7 {
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -38,25 +31,9 @@ html, body {
 #level6 { background:#cce7ff; }
 #level7 { background:#ffe0cc; }
 .hidden { display:none !important; }
-button {
-    margin-top:20px;
-    padding:10px 20px;
-    font-size:1.2rem;
-    border:none;
-    border-radius:10px;
-    background:#e94e77;
-    color:white;
-    cursor:pointer;
-}
+button { margin-top:20px; padding:10px 20px; font-size:1.2rem; border:none; border-radius:10px; background:#e94e77; color:white; cursor:pointer; }
 button:hover { background:#c53e63; }
-input {
-    font-size:1.2rem;
-    padding:10px;
-    border-radius:10px;
-    border:2px solid #333;
-    text-align:center;
-    width:180px;
-}
+input { font-size:1.2rem; padding:10px; border-radius:10px; border:2px solid #333; text-align:center; width:180px; }
 #logo { max-width:40%; height:auto; }
 #level2 p { font-size:1.5rem; }
 #riddleText { font-size:1rem; }
@@ -64,28 +41,36 @@ input {
 </style>
 </head>
 <body>
+
+<!-- Level 1 -->
 <div id="level1">
     <img id="logo" src="https://i.imgur.com/vl6pcuM.png" alt="Questify Logo">
     <button id="startBtn">Let's Start</button>
 </div>
 
+<!-- Level 2 -->
 <div id="level2" class="hidden">
     <h2>Rules</h2>
-    <p>1. You can use whatever you want.<br> 2. You can't ask me for help.<br> 3. There is no time limit.</p>
+    <p>1. You can use whatever you want.<br>
+       2. You can't ask me for help.<br>
+       3. There is no time limit.</p>
     <button id="micBtn">Allow Microphone</button>
     <button id="continueBtn" class="hidden">Start</button>
 </div>
 
+<!-- Level 3 -->
 <div id="level3" class="hidden">
     <input id="colorInput" type="text" placeholder="" />
     <button id="submitColor">Submit</button>
 </div>
 
+<!-- Level 4 -->
 <div id="level4" class="hidden">
     <h2 id="riddleText"> I abide in stillness, poised for the fleeting instant, Elation ripples through the unseen ether, Tribute and reverence choreograph the way </h2>
     <p id="clapStatus"></p>
 </div>
 
+<!-- Level 5 -->
 <div id="level5" class="hidden">
     <img id="level5Image" src="" alt="Level 5 Image">
     <div style="margin-top:20px;">
@@ -95,11 +80,13 @@ input {
     <p id="secretMessage" style="font-weight:bold;margin-top:10px;"></p>
 </div>
 
+<!-- Level 6 -->
 <div id="level6" class="hidden">
     <h2>Level 6: Modulo Riddle</h2>
+    <button id="generateMod">Generate New Prime Modulo</button>
     <p>Enter a number of at least 4 digits:</p>
     <input id="modInput" placeholder="Your number" />
-    <button id="checkMod">Get Remainder</button>
+    <button id="checkMod">Check Modulo</button>
     <p id="modResult" style="margin-top:10px; font-weight:bold;"></p>
     <p>Guess the secret modulo number:</p>
     <input id="modGuess" placeholder="Your guess" />
@@ -107,295 +94,288 @@ input {
     <p id="modGuessMessage" style="font-weight:bold;margin-top:10px;"></p>
 </div>
 
+<!-- Level 7 -->
 <div id="level7" class="hidden">
     <h2>Level 7: To Be Continued...</h2>
-    <p id="level7Message">The adventure continues in the next chapter!</p>
+    <p>The adventure continues in the next chapter!</p>
+    <p id="modReminder" style="font-weight:bold; margin-top:20px;"></p>
 </div>
 
+<!-- EmailJS SDK -->
 <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
-    (function(){
-        emailjs.init("YOUR_USER_ID"); // REPLACE THIS
-    })();
+(function(){ emailjs.init("YOUR_USER_ID"); })(); // Replace with your EmailJS User ID
 </script>
+
 <script>
-    const l1 = document.getElementById("level1");
-    const l2 = document.getElementById("level2");
-    const l3 = document.getElementById("level3");
-    const l4 = document.getElementById("level4");
-    const l5 = document.getElementById("level5");
-    const l6 = document.getElementById("level6");
-    const l7 = document.getElementById("level7");
-    const startBtn = document.getElementById("startBtn");
-    const micBtn = document.getElementById("micBtn");
-    const continueBtn = document.getElementById("continueBtn");
-    const submitColor = document.getElementById("submitColor");
-    const colorInput = document.getElementById("colorInput");
-    const clapStatus = document.getElementById("clapStatus");
-    const level5Image = document.getElementById("level5Image");
-    const secretInput = document.getElementById("secretInput");
-    const checkSecret = document.getElementById("checkSecret");
-    const secretMessage = document.getElementById("secretMessage");
-    // const generateMod = document.getElementById("generateMod"); // REMOVED
-    const modInput = document.getElementById("modInput");
-    const checkMod = document.getElementById("checkMod");
-    const modResult = document.getElementById("modResult");
-    const modGuess = document.getElementById("modGuess");
-    const submitModGuess = document.getElementById("submitModGuess");
-    const modGuessMessage = document.getElementById("modGuessMessage");
-    const level7Message = document.getElementById("level7Message");
+const l1 = document.getElementById("level1");
+const l2 = document.getElementById("level2");
+const l3 = document.getElementById("level3");
+const l4 = document.getElementById("level4");
+const l5 = document.getElementById("level5");
+const l6 = document.getElementById("level6");
+const l7 = document.getElementById("level7");
 
-    let audioContext, micStream, analyser, dataArray;
-    let animationFrameId;
-    const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
-    const level5Images = [
-        "https://i.imgur.com/wIANnSO.jpeg",
-        "https://i.imgur.com/SL7azLS.jpeg",
-        "https://i.imgur.com/ksgaCXU.jpeg",
-        "https://i.imgur.com/ZLkx3eu.jpeg"
-    ];
+const startBtn = document.getElementById("startBtn");
+const micBtn = document.getElementById("micBtn");
+const continueBtn = document.getElementById("continueBtn");
 
-    // --- Global Modulo Variable ---
-    let secretMod;
-    let finalRemainder = 0;
+const submitColor = document.getElementById("submitColor");
+const colorInput = document.getElementById("colorInput");
 
-    // --- Email function ---
-    function sendLevelEmail(levelNumber) {
-        // REPLACE 'YOUR_SERVICE_ID' AND 'YOUR_TEMPLATE_ID'
-        emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", { 
-            level: levelNumber, 
-            player: "Anonymous", 
-            date: new Date().toLocaleString() 
-        }).then(
-            () => console.log("Email sent for level " + levelNumber),
-            error => console.error("Email error:", error)
-        );
+const clapStatus = document.getElementById("clapStatus");
+
+const level5Image = document.getElementById("level5Image");
+const secretInput = document.getElementById("secretInput");
+const checkSecret = document.getElementById("checkSecret");
+const secretMessage = document.getElementById("secretMessage");
+
+const generateMod = document.getElementById("generateMod");
+const modInput = document.getElementById("modInput");
+const checkMod = document.getElementById("checkMod");
+const modResult = document.getElementById("modResult");
+const modGuess = document.getElementById("modGuess");
+const submitModGuess = document.getElementById("submitModGuess");
+const modGuessMessage = document.getElementById("modGuessMessage");
+
+let audioContext, micStream, analyser, dataArray, animationFrameId;
+
+const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
+
+const level5Images = [
+    "https://i.imgur.com/wIANnSO.jpeg",
+    "https://i.imgur.com/SL7azLS.jpeg",
+    "https://i.imgur.com/ksgaCXU.jpeg",
+    "https://i.imgur.com/ZLkx3eu.jpeg"
+];
+
+// --- Email function ---
+function sendLevelEmail(levelNumber) {
+    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+        level: levelNumber,
+        player: "Anonymous",
+        date: new Date().toLocaleString()
+    }).then(
+        () => console.log("Email sent for level " + levelNumber),
+        error => console.error("Email error:", error)
+    );
+}
+
+// --- Level 1 ---
+startBtn.onclick = () => {
+    l1.classList.add("hidden");
+    l2.classList.remove("hidden");
+};
+
+// --- Level 2 ---
+micBtn.onclick = async () => {
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const source = audioContext.createMediaStreamSource(micStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 512;
+        dataArray = new Uint8Array(analyser.fftSize);
+        source.connect(analyser);
+        micBtn.classList.add("hidden");
+        continueBtn.classList.remove("hidden");
+    } catch (err) {
+        console.warn("No microphone detected or access denied.", err);
+        alert("No microphone detected. You can continue without it.");
+        micBtn.classList.add("hidden");
+        continueBtn.classList.remove("hidden");
     }
+};
 
-    // --- Level 1 ---
-    startBtn.onclick = () => {
-        l1.classList.add("hidden");
-        l2.classList.remove("hidden");
-    };
+continueBtn.onclick = () => {
+    l2.classList.add("hidden");
+    l3.classList.remove("hidden");
+    colorInput.focus();
+};
 
-    // --- Level 2 ---
-    micBtn.onclick = async () => {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const source = audioContext.createMediaStreamSource(micStream);
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 512;
-            dataArray = new Uint8Array(analyser.fftSize);
-            source.connect(analyser);
-            micBtn.classList.add("hidden");
-            continueBtn.classList.remove("hidden");
-        } catch (err) {
-            console.warn("No microphone detected or access denied.", err);
-            alert("No microphone detected. You can continue without it.");
-            micBtn.classList.add("hidden");
-            continueBtn.classList.remove("hidden");
+// --- Level 3 ---
+submitColor.onclick = () => {
+    const guess = colorInput.value.trim().toLowerCase();
+    const normalized = guess.startsWith('#') ? guess : '#' + guess;
+    const isCorrect = allowedColors.some(c => c.replace('#','').toLowerCase() === normalized.replace('#',''));
+    if (isCorrect) {
+        l3.classList.add("hidden");
+        l4.classList.remove("hidden");
+        sendLevelEmail(3);
+        startClapDetection();
+    } else {
+        alert("Try again!");
+    }
+};
+
+// --- Level 4: Clap detection ---
+function startClapDetection() {
+    if (!analyser) return;
+    let lastClapTime = 0;
+    const doubleClapInterval = 600;
+    const debounceTime = 250;
+    let clapSequenceStartTime = 0;
+    let clapsInSequence = 0;
+    const threshold = 0.20;
+    const spikeMultiplier = 2.2;
+    let peakHistory = [];
+
+    function detectClap() {
+        analyser.getByteTimeDomainData(dataArray);
+        let sum = 0, peak = 0;
+        for (let i=0;i<dataArray.length;i++){
+            const v=(dataArray[i]-128)/128;
+            sum+=v*v;
+            peak=Math.max(peak,Math.abs(v));
         }
-    };
-    continueBtn.onclick = () => {
-        l2.classList.add("hidden");
-        l3.classList.remove("hidden");
-        colorInput.focus();
-    };
+        const rms=Math.sqrt(sum/dataArray.length);
+        const now=Date.now();
+        peakHistory.push(peak);
+        if (peakHistory.length>5) peakHistory.shift();
+        const avgPeak = peakHistory.reduce((a,b)=>a+b,0)/peakHistory.length;
+        const isSuddenSpike = peak>avgPeak*spikeMultiplier;
 
-    // --- Level 3 ---
-    submitColor.onclick = () => {
-        const guess = colorInput.value.trim().toLowerCase();
-        const normalized = guess.startsWith('#') ? guess : '#' + guess;
-        const isCorrect = allowedColors.some(c => c.replace('#','').toLowerCase() === normalized.replace('#',''));
-        if (isCorrect) {
-            l3.classList.add("hidden");
-            l4.classList.remove("hidden");
-            sendLevelEmail(3);
-            startClapDetection();
-        } else {
-            alert("Try again!");
-        }
-    };
-
-    // --- Level 4: Clap detection ---
-    function startClapDetection() {
-        if (!analyser) return;
-        let lastClapTime = 0;
-        const doubleClapInterval = 600;
-        const debounceTime = 250;
-        let clapSequenceStartTime = 0;
-        let clapsInSequence = 0;
-        const threshold = 0.20;
-        const spikeMultiplier = 2.2;
-        let peakHistory = [];
-
-        function detectClap() {
-            analyser.getByteTimeDomainData(dataArray);
-            let sum = 0, peak = 0;
-            for (let i=0;i<dataArray.length;i++){
-                const v=(dataArray[i]-128)/128;
-                sum+=v*v;
-                peak=Math.max(peak,Math.abs(v));
-            }
-            const rms=Math.sqrt(sum/dataArray.length);
-            const now=Date.now();
-            
-            peakHistory.push(peak);
-            if (peakHistory.length>5) peakHistory.shift();
-            const avgPeak = peakHistory.reduce((a,b)=>a+b,0)/peakHistory.length;
-            const isSuddenSpike = peak>avgPeak*spikeMultiplier;
-
-            if (rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime) {
-                lastClapTime=now;
-
-                if(clapsInSequence===0){
+        if (rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime) {
+            lastClapTime=now;
+            if(clapsInSequence===0){
+                clapsInSequence=1;
+                clapSequenceStartTime=now;
+            } else if(clapsInSequence===1){
+                if(now-clapSequenceStartTime<=doubleClapInterval){
+                    clapsInSequence=2;
+                    clapStatus.textContent="👏 Clap detected!";
+                    cancelAnimationFrame(animationFrameId);
+                    l4.classList.add("hidden");
+                    l5.classList.remove("hidden");
+                    updateLevel5Image();
+                    sendLevelEmail(5);
+                    return;
+                } else {
                     clapsInSequence=1;
                     clapSequenceStartTime=now;
-                } else if(clapsInSequence===1){
-                    if(now-clapSequenceStartTime<=doubleClapInterval){
-                        clapsInSequence=2;
-                        clapStatus.textContent="👏 Double Clap detected! 👏";
-                        cancelAnimationFrame(animationFrameId);
-                        l4.classList.add("hidden");
-                        l5.classList.remove("hidden");
-                        updateLevel5Image();
-                        sendLevelEmail(4);
-                        return;
-                    } else {
-                        clapsInSequence=1;
-                        clapSequenceStartTime=now;
-                    }
                 }
             }
-            if(clapsInSequence===1 && now-clapSequenceStartTime>doubleClapInterval){
-                clapsInSequence=0;
-                clapSequenceStartTime=0;
-            }
-
-            if(clapsInSequence!==2){
-                animationFrameId=requestAnimationFrame(detectClap);
-            }
         }
-        detectClap();
+
+        if(clapsInSequence===1 && now-clapSequenceStartTime>doubleClapInterval){
+            clapsInSequence=0;
+            clapSequenceStartTime=0;
+        }
+
+        if(clapsInSequence!==2){
+            animationFrameId=requestAnimationFrame(detectClap);
+        }
     }
 
-    // --- Level 5 ---
-    function updateLevel5Image() {
-        const now = new Date();
-        const minute = now.getMinutes();
-        const index = Math.floor((minute % 40) / 10) % 4;
-        level5Image.src = level5Images[index];
-    }
-    setInterval(() => {
-        if (!l5.classList.contains("hidden")) updateLevel5Image();
-    }, 60000);
+    detectClap();
+}
 
-    checkSecret.onclick = () => {
-        const input = secretInput.value.trim().toLowerCase();
-        if (input === "continue") {
-            secretMessage.textContent = "✅ Correct! Moving to Level 6...";
-            setTimeout(() => {
-                l5.classList.add("hidden");
-                l6.classList.remove("hidden");
-                sendLevelEmail(5);
-                prepareLevel6(); // Initialize Level 6
-            }, 1000);
-        } else {
-            secretMessage.textContent = "Try again";
-        }
-    };
+// --- Level 5 ---
+function updateLevel5Image() {
+    const now = new Date();
+    const minute = now.getMinutes();
+    const index = Math.floor((minute % 40) / 10) % 4;
+    level5Image.src = level5Images[index];
+}
 
-      // --- Level 6: Modulo Riddle (auto-generate prime on input) ---
-    function generateRandomPrimeUnder1000() {
-        const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997];
-        return primes[Math.floor(Math.random() * primes.length)];
+setInterval(() => {
+    if (!l5.classList.contains("hidden")) updateLevel5Image();
+}, 60000);
+
+checkSecret.onclick = () => {
+    const input = secretInput.value.trim().toLowerCase();
+    if (input === "continue") {
+        secretMessage.textContent = "✅ Correct! Moving to Level 6...";
+        setTimeout(() => {
+            l5.classList.add("hidden");
+            l6.classList.remove("hidden");
+            sendLevelEmail(6);
+        }, 1000);
+    } else {
+        secretMessage.textContent = "Try again";
     }
-    
-    function prepareLevel6() {
-        secretMod = generateRandomPrimeUnder1000();
-        modResult.textContent = "";
-        modGuessMessage.textContent = "";
-        modInput.value = "";
-        modGuess.value = "";
-        finalRemainder = 0;
-    }
-    
-    modInput.addEventListener("input", () => {
-        const val = parseInt(modInput.value.trim());
-        if (!isNaN(val) && val >= 1000) {
-            secretMod = generateRandomPrimeUnder1000(); // new prime on every input
-            finalRemainder = val % secretMod;
-            modResult.textContent = `Remainder: ${finalRemainder}`;
-        } else {
-            modResult.textContent = "";
-        }
-    });
-    
-    submitModGuess.onclick = () => {
-        const guess = parseInt(modGuess.value.trim());
-        if (guess === secretMod) {
-            modGuessMessage.textContent = "✅ Correct! Moving to Level 7...";
-            modGuessMessage.style.color = "green";
-            level7Message.innerHTML = `The journey ends for now, but the secret key remains.<br>Look to the remainder you found: **${finalRemainder}**.<br>The adventure continues in the next chapter!`;
-            setTimeout(() => {
-                l6.classList.add("hidden");
-                l7.classList.remove("hidden");
-                sendLevelEmail(6);
-            }, 1000);
-        } else {
-            modGuessMessage.textContent = "Try again.";
-            modGuessMessage.style.color = "red";
-        }
-    };
-    
-    // Initialize Level 6
+};
+
+// ---------- Level 6: Modulo Riddle ----------
+function generateRandomPrimeUnder1000() {
+    const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,541,547,557,563,569,571,577,587,593,599,601,607,613,617,619,631,641,643,647,653,659,661,673,677,683,691,701,709,719,727,733,739,743,751,757,761,769,773,787,797,809,811,821,823,827,829,839,853,857,859,863,877,881,883,887,907,911,919,929,937,941,947,953,967,971,977,983,991,997];
+    return primes[Math.floor(Math.random() * primes.length)];
+}
+
+function prepareLevel6() {
+    secretMod = generateRandomPrimeUnder1000();
+    modResult.textContent = "";
+    modGuessMessage.textContent = "";
+    modInput.value = "";
+    modGuess.value = "";
+    document.getElementById('modReminder').textContent = "Reminder: Secret modulo is " + secretMod;
+}
+
+generateMod.onclick = () => {
     prepareLevel6();
-    
-        
-        // Initialize the modulo on page load
-        prepareLevel6();
-    // ---------- deterrent measures (Kept as is) ----------
-    const deterrentNotice = document.createElement('div');
-    deterrentNotice.style.position='fixed';
-    deterrentNotice.style.bottom='20px';
-    deterrentNotice.style.left='50%';
-    deterrentNotice.style.transform='translateX(-50%)';
-    deterrentNotice.style.background='rgba(0,0,0,0.7)';
-    deterrentNotice.style.color='white';
-    deterrentNotice.style.padding='10px 20px';
-    deterrentNotice.style.borderRadius='10px';
-    deterrentNotice.style.display='none';
-    document.body.appendChild(deter deterrentNotice);
-    let deterrentTimeout = null;
+    alert("A new prime modulo has been generated!");
+};
 
-    function showDeterrentMessage(msg) {
-        deterrentNotice.textContent = msg || 'Action blocked — this is a protected experience.';
-        deterrentNotice.style.display = 'block';
-        clearTimeout(deterrentTimeout);
-        deterrentTimeout = setTimeout(() => {
-            deterrentNotice.style.display = 'none';
-        }, 2400);
+checkMod.onclick = () => {
+    const val = parseInt(modInput.value.trim());
+    if (isNaN(val) || val < 1000) {
+        modResult.textContent = "Enter a 4-digit or larger number.";
+        return;
     }
+    modResult.textContent = "Your number is valid. Now guess the modulo!";
+};
 
-    document.addEventListener('contextmenu', e => {
+submitModGuess.onclick = () => {
+    const guess = parseInt(modGuess.value.trim());
+    if (guess === secretMod) {
+        modGuessMessage.textContent = "✅ Correct! Moving to Level 7...";
+        modGuessMessage.style.color = "green";
+        setTimeout(() => {
+            l6.classList.add("hidden");
+            l7.classList.remove("hidden");
+            sendLevelEmail(7);
+        }, 1000);
+    } else {
+        modGuessMessage.textContent = "Try again.";
+        modGuessMessage.style.color = "red";
+    }
+};
+
+// ---------- deterrent measures ----------
+const deterrentNotice = document.createElement('div');
+deterrentNotice.style.position='fixed';
+deterrentNotice.style.bottom='20px';
+deterrentNotice.style.left='50%';
+deterrentNotice.style.transform='translateX(-50%)';
+deterrentNotice.style.background='rgba(0,0,0,0.7)';
+deterrentNotice.style.color='white';
+deterrentNotice.style.padding='10px 20px';
+deterrentNotice.style.borderRadius='10px';
+deterrentNotice.style.display='none';
+document.body.appendChild(deterrentNotice);
+let deterrentTimeout = null;
+function showDeterrentMessage(msg) {
+    deterrentNotice.textContent = msg || 'Action blocked — this is a protected experience.';
+    deterrentNotice.style.display = 'block';
+    clearTimeout(deterrentTimeout);
+    deterrentTimeout = setTimeout(() => {
+        deterrentNotice.style.display = 'none';
+    }, 2400);
+}
+document.addEventListener('contextmenu', e => { e.preventDefault(); showDeterrentMessage('Right-click is disabled.'); });
+document.addEventListener('keydown', e => {
+    const ctrl = e.ctrlKey || e.metaKey;
+    const shift = e.shiftKey;
+    const key = e.key.toLowerCase();
+    if (e.key==='F12' || (ctrl && shift && ['i','j','c','k','r'].includes(key)) || (ctrl && ['u','s'].includes(key))) {
         e.preventDefault();
-        showDeterrentMessage('Right-click is disabled.');
-    });
+        showDeterrentMessage('This action is disabled.');
+        return false;
+    }
+});
+document.addEventListener('selectstart', e => e.preventDefault());
+document.addEventListener('dragstart', e => e.preventDefault());
 
-    document.addEventListener('keydown', e => {
-        const ctrl = e.ctrlKey || e.metaKey;
-        const shift = e.shiftKey;
-        const key = e.key.toLowerCase();
-        if (e.key==='F12' || (ctrl && shift && ['i','j','c','k','r'].includes(key)) || (ctrl && ['u','s'].includes(key))) {
-            e.preventDefault();
-            showDeterrentMessage('This action is disabled.');
-            return false;
-        }
-    });
-
-    document.addEventListener('selectstart', e => e.preventDefault());
-    document.addEventListener('dragstart', e => e.preventDefault());
 </script>
 </body>
 </html>
