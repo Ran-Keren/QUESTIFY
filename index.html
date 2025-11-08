@@ -91,14 +91,12 @@ input { font-size:1.2rem; padding:10px; border-radius:10px; border:2px solid #33
     <input id="modGuess" placeholder="Your guess" />
     <button id="submitModGuess">Submit Guess</button>
     <p id="modGuessMessage" style="font-weight:bold;margin-top:10px;"></p>
-    <p id="modReminder" style="font-weight:bold; margin-top:10px;"></p>
 </div>
 
 <!-- Level 7 -->
 <div id="level7" class="hidden">
     <h2>Level 7: To Be Continued...</h2>
     <p>The adventure continues in the next chapter!</p>
-    <p id="modReminderFinal" style="font-weight:bold; margin-top:20px;"></p>
 </div>
 
 <!-- EmailJS SDK -->
@@ -136,11 +134,10 @@ const modResult = document.getElementById("modResult");
 const modGuess = document.getElementById("modGuess");
 const submitModGuess = document.getElementById("submitModGuess");
 const modGuessMessage = document.getElementById("modGuessMessage");
-const modReminder = document.getElementById("modReminder");
-const modReminderFinal = document.getElementById("modReminderFinal");
 
 let audioContext, micStream, analyser, dataArray, animationFrameId;
-let secretMod, modCheckCount = 0;
+let secretMod = generateRandomPrimeUnder1000(); // initial secret
+let modPressCount = 0;
 
 const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
 
@@ -304,22 +301,19 @@ function generateRandomPrimeUnder1000() {
 }
 
 checkMod.onclick = () => {
-    secretMod = generateRandomPrimeUnder1000(); // new secret every press
     const val = parseInt(modInput.value.trim());
     if (!isNaN(val) && val >= 1000) {
-        const remainder = val % secretMod;
-        modResult.textContent = remainder; // show remainder
-        modGuess.value = "";
-
-        modCheckCount++;
-        if(modCheckCount >= 2){
-            modReminder.textContent = "Reminder: " + remainder; // only after 2nd press
-        } else {
-            modReminder.textContent = "";
+        modPressCount++;
+        // update secretMod only after 2 presses
+        if(modPressCount >= 2){
+            secretMod = generateRandomPrimeUnder1000();
+            modPressCount = 0; // reset
         }
+        const remainder = val % secretMod;
+        modResult.textContent = remainder; // always show remainder
+        modGuess.value = "";
     } else {
         modResult.textContent = "";
-        modReminder.textContent = "";
     }
 };
 
@@ -331,7 +325,6 @@ submitModGuess.onclick = () => {
         setTimeout(() => {
             l6.classList.add("hidden");
             l7.classList.remove("hidden");
-            modReminderFinal.textContent = "Reminder: Secret modulo was " + secretMod;
             sendLevelEmail(7);
         }, 1000);
     } else {
@@ -340,7 +333,7 @@ submitModGuess.onclick = () => {
     }
 };
 
-// ---------- deterrent measures ----------
+// --- Deterrent measures ---
 const deterrentNotice = document.createElement('div');
 deterrentNotice.style.position='fixed';
 deterrentNotice.style.bottom='20px';
