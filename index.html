@@ -293,6 +293,87 @@ checkSecret.onclick = () => {
     secretMessage.textContent = "❌ Wrong word. Try again.";
   }
 };
+  
+/* ---------- deterrent measures (option 3) ---------- */
+const deterrentNotice = document.getElementById('deterrentNotice');
+let deterrentTimeout = null;
+function showDeterrentMessage(msg) {
+  deterrentNotice.textContent = msg || 'Action blocked — this is a protected experience.';
+  deterrentNotice.style.display = 'block';
+  clearTimeout(deterrentTimeout);
+  deterrentTimeout = setTimeout(() => {
+    deterrentNotice.style.display = 'none';
+  }, 2400);
+}
+
+// 1) Block right-click context menu
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+  showDeterrentMessage('Right-click is disabled on this page.');
+});
+
+// 2) Block common DevTools / view-source / save shortcuts
+document.addEventListener('keydown', function(e) {
+  // Normalized booleans
+  const ctrl = e.ctrlKey || e.metaKey; // support CMD on macOS via metaKey
+  const shift = e.shiftKey;
+  const key = e.key ? e.key.toLowerCase() : '';
+
+  // Block F12
+  if (e.key === 'F12') {
+    e.preventDefault();
+    showDeterrentMessage('This action is disabled.');
+    return false;
+  }
+
+  // Block Ctrl/Cmd + Shift + I / J / C (DevTools)
+  if (ctrl && shift && (key === 'i' || key === 'j' || key === 'c')) {
+    e.preventDefault();
+    showDeterrentMessage('Opening developer tools is disabled.');
+    return false;
+  }
+
+  // Block Ctrl/Cmd + U (view source)
+  if (ctrl && key === 'u') {
+    e.preventDefault();
+    showDeterrentMessage('Viewing source is disabled.');
+    return false;
+  }
+
+  // Block Ctrl/Cmd + S (save)
+  if (ctrl && key === 's') {
+    e.preventDefault();
+    showDeterrentMessage('Saving this page is disabled.');
+    return false;
+  }
+
+  // Block Ctrl/Cmd + Shift + C / K (inspect element / console shortcuts)
+  if (ctrl && shift && (key === 'c' || key === 'k')) {
+    e.preventDefault();
+    showDeterrentMessage('This action is disabled.');
+    return false;
+  }
+
+  // Block Ctrl/Cmd + Shift + R / F5 (hard reload) — just prevent default behaviour for key combos
+  if ((ctrl && shift && key === 'r') || e.key === 'F5') {
+    e.preventDefault();
+    showDeterrentMessage('Reload disabled.');
+    return false;
+  }
+});
+
+// 3) Try to disable selection and dragging as extra deterrent (CSS + JS)
+document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+
+// 4) On-focus/blur note (optional): inform if user switches away (casual deterrent)
+window.addEventListener('blur', () => {
+  // small, non-blocking message when user switches out
+  showDeterrentMessage('Focus lost — please stay in the game.');
+});
+
+/* ---------- end of deterrent measures ---------- */
+
 </script>
 
 </body>
