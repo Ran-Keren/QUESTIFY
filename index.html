@@ -49,6 +49,14 @@
     max-width:60%;
     height:auto;
   }
+  /* Level 2 rules styling */
+  #level2 p {
+    font-size:1.5rem; /* enlarged font */
+  }
+  /* Level 4 riddle styling */
+  #riddleText {
+    font-size:1rem; /* reduced font */
+  }
 </style>
 </head>
 <body>
@@ -71,7 +79,7 @@
 
 <!-- Level 3 -->
 <div id="level3" class="hidden">
-  <input id="colorInput" type="text" placeholder="Enter color hex..." />
+  <input id="colorInput" type="text" placeholder="" />
   <button id="submitColor">Submit</button>
 </div>
 
@@ -183,7 +191,7 @@ function startClapDetection() {
   let clapSequenceStartTime = 0;
   let clapsInSequence = 0;
 
-  const threshold = 0.3; // slightly reduced
+  const threshold = 0.25; // further reduced for easier detection
   const spikeMultiplier = 2.2; 
   let peakHistory = [];
 
