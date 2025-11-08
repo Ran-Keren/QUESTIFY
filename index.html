@@ -135,6 +135,7 @@ const modResult = document.getElementById("modResult");
 const modGuess = document.getElementById("modGuess");
 const submitModGuess = document.getElementById("submitModGuess");
 const modGuessMessage = document.getElementById("modGuessMessage");
+const modReminder = document.getElementById("modReminder");
 
 let audioContext, micStream, analyser, dataArray, animationFrameId;
 let secretMod;
@@ -302,12 +303,11 @@ function generateRandomPrimeUnder1000() {
 }
 
 checkMod.onclick = () => {
-    secretMod = generateRandomPrimeUnder1000(); // generate new secret each check
+    secretMod = generateRandomPrimeUnder1000(); // new secret every check
     const val = parseInt(modInput.value.trim());
     if (!isNaN(val) && val >= 1000) {
-        modResult.textContent = val; // show only the number
+        modResult.textContent = val; // only show number entered
         modGuess.value = "";         // reset guess
-        document.getElementById('modReminder').textContent = "Reminder: Secret modulo is " + secretMod;
     } else {
         modResult.textContent = "";
     }
@@ -321,6 +321,7 @@ submitModGuess.onclick = () => {
         setTimeout(() => {
             l6.classList.add("hidden");
             l7.classList.remove("hidden");
+            modReminder.textContent = "Reminder: Secret modulo was " + secretMod;
             sendLevelEmail(7);
         }, 1000);
     } else {
