@@ -26,7 +26,7 @@
     flex-direction: column;
   }
   
-  #level3 { background: #66ff00; }
+  #level3 { background: #00ff66; }
 
   .hidden { display:none !important; }
   button {
@@ -67,8 +67,13 @@
 </div>
 
 <div id="level4" class="hidden">
-  <h2>👏 Double Clap to continue...</h2>
-  <p id="clapStatus">A double clap will unlock the next level.</p>
+  <h2 id="riddleText">
+    I abide in stillness, poised for the fleeting instant,<br>
+    Elation ripples through the unseen ether,<br>
+    Tribute and reverence choreograph the way
+  </h2>
+  <p id="clapStatus"></p>
+  <div id="photoPlaceholder" style="margin-top:20px; font-size:2rem; font-weight:bold;"></div>
 </div>
 
 <div id="level5" class="hidden">
@@ -93,6 +98,7 @@ const continueBtn = document.getElementById("continueBtn");
 const submitColor = document.getElementById("submitColor");
 const colorInput = document.getElementById("colorInput");
 const clapStatus = document.getElementById("clapStatus");
+const photoPlaceholder = document.getElementById("photoPlaceholder");
 
 let audioContext, micStream, analyser, dataArray;
 const targetColor = '#00ff66'; 
@@ -113,7 +119,6 @@ function sendLevelEmail(levelNumber) {
 startBtn.onclick = () => {
   l1.classList.add("hidden");
   l2.classList.remove("hidden");
-
 };
 
 // --- Level 2 ---
@@ -139,7 +144,6 @@ continueBtn.onclick = () => {
   l2.classList.add("hidden");
   l3.classList.remove("hidden");
   colorInput.focus();
-
 };
 
 // --- Level 3 ---
@@ -151,7 +155,7 @@ submitColor.onclick = () => {
     l4.classList.remove("hidden");
     sendLevelEmail(3); // send email after level 3
     startClapDetection();
-
+  }
 };
 
 // --- Level 4: Clap Detection ---
@@ -164,8 +168,8 @@ function startClapDetection() {
   let clapSequenceStartTime = 0;
   let clapsInSequence = 0;
 
-  const threshold = 0.42;
-  const spikeMultiplier = 2.5;
+  const threshold = 0.35;      
+  const spikeMultiplier = 2.2; 
   let peakHistory = [];
 
   function detectClap() {
@@ -186,26 +190,32 @@ function startClapDetection() {
 
     if (rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime) {
       lastClapTime=now;
+
       if(clapsInSequence===0){
         clapsInSequence=1;
         clapSequenceStartTime=now;
-        clapStatus.textContent="👏 First clap detected! Clap again quickly...";
+        // NO message for first clap
       } else if(clapsInSequence===1){
         if(now-clapSequenceStartTime<=doubleClapInterval){
           clapsInSequence=2;
-          clapStatus.textContent="🎉 Double clap detected! Level passed!";
+          clapStatus.textContent="✅ Success!";
           cancelAnimationFrame(animationFrameId);
-          sendLevelEmail(4); // send email after level 4
+
+          // Display the "photo" - rounded hour
+          const hour = new Date().getHours();
+          photoPlaceholder.textContent = "🖼 Hour: " + hour;
+
+          sendLevelEmail(4); // send email after level 4 double clap
+
           setTimeout(()=>{
             l4.classList.add("hidden");
             l5.classList.remove("hidden");
             sendLevelEmail(5); // send email after final level
-          },500);
+          }, 1000);
           return;
         } else {
           clapsInSequence=1;
           clapSequenceStartTime=now;
-          clapStatus.textContent="👏 Too slow! First clap detected again. Clap quickly!";
         }
       }
     }
@@ -213,7 +223,6 @@ function startClapDetection() {
     if(clapsInSequence===1 && now-clapSequenceStartTime>doubleClapInterval){
       clapsInSequence=0;
       clapSequenceStartTime=0;
-      clapStatus.textContent="A double clap will unlock the next level.";
     }
 
     if(clapsInSequence!==2){
@@ -223,7 +232,6 @@ function startClapDetection() {
 
   detectClap();
 }
-
 </script>
 
 </body>
