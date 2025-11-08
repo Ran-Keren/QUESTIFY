@@ -325,7 +325,7 @@ submitModGuess.onclick = () => {
         setTimeout(() => {
             l6.classList.add("hidden");
             l7.classList.remove("hidden");
-            modReminderFinal.textContent = "Reminder: Secret modulo was " + secretMod;
+            modReminderFinal.textContent = "" + secretMod;
             sendLevelEmail(7);
         }, 1000);
     } else {
