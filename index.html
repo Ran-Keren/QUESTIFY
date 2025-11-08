@@ -5,77 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Questify Game</title>
 <style>
-  html, body {
-    margin:0; padding:0;
-    height:100%; width:100%;
-    display:flex; justify-content:center; align-items:center;
-    font-family:Arial, sans-serif; text-align:center;
-    background:#fff;
-    color:#222; flex-direction:column;
-  }
-  
-  #level1, #level2, #level3, #level4, #level5 {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-  }
-  
-  #level3 { background: #00ff66; }
+  html, body {
+    margin:0; padding:0;
+    height:100%; width:100%;
+    display:flex; justify-content:center; align-items:center;
+    font-family:Arial, sans-serif; text-align:center;
+    background:#fff;
+    color:#222; flex-direction:column;
+  }
+  
+  #level1, #level2, #level3, #level4, #level5 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  
+  #level3 { background: #66ff00; }
 
-  .hidden { display:none !important; }
-  button {
-    margin-top:20px;
-    padding:10px 20px;
-    font-size:1.2rem;
-    border:none; border-radius:10px;
-    background:#e94e77; color:white;
-    cursor:pointer;
-  }
-  button:hover { background:#c53e63; }
-  input {
-    font-size:1.2rem; padding:10px;
-    border-radius:10px; border:2px solid #333;
-    text-align:center; width:150px;
-  }
+  .hidden { display:none !important; }
+  button {
+    margin-top:20px;
+    padding:10px 20px;
+    font-size:1.2rem;
+    border:none; border-radius:10px;
+    background:#e94e77; color:white;
+    cursor:pointer;
+  }
+  button:hover { background:#c53e63; }
+  input {
+    font-size:1.2rem; padding:10px;
+    border-radius:10px; border:2px solid #333;
+    text-align:center; width:150px;
+  }
 </style>
 </head>
 <body>
 
 <div id="level1">
-  <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
-  <button id="startBtn">Let's Start</button>
+  <div style="font-size:3rem; color:red; font-weight:bold;">🔒 Questify</div>
+  <button id="startBtn">Let's Start</button>
 </div>
 
 <div id="level2" class="hidden">
-  <h2>Rules</h2>
-  <p>1. You can use whatever you want.<br>
-     2. You can't ask me for help.<br>
-     3. There is no time limit.</p>
-  <button id="micBtn">Allow Microphone</button>
-  <button id="continueBtn" class="hidden">Start</button>
+  <h2>Rules</h2>
+  <p>1. You can use whatever you want.<br>
+     2. You can't ask me for help.<br>
+     3. There is no time limit.</p>
+  <button id="micBtn">Allow Microphone</button>
+  <button id="continueBtn" class="hidden">Start</button>
 </div>
 
 <div id="level3" class="hidden">
-  <input id="colorInput" type="text" placeholder="" />
-  <button id="submitColor">Submit</button>
+  <input id="colorInput" type="text" placeholder="" />
+  <button id="submitColor">Submit</button>
 </div>
 
 <div id="level4" class="hidden">
-  <h2>"I abide in stillness, poised for the fleeting instant, Elation ripples through the unseen ether, Tribute and reverence choreograph the way"</h2>
-  <p id="clapStatus">A double clap will unlock the next level.</p>
+  <h2>👏 Double Clap to continue...</h2>
+  <p id="clapStatus">A double clap will unlock the next level.</p>
 </div>
 
 <div id="level5" class="hidden">
-  <h2>Level Complete!</h2>
-  <p id="timeDisplay"></p>
+  <h2>🎉 You passed the clap level!</h2>
 </div>
 
+<!-- EmailJS SDK -->
 <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
 (function(){ emailjs.init("YOUR_USER_ID"); })(); // Replace with your EmailJS User ID
@@ -93,147 +93,135 @@ const continueBtn = document.getElementById("continueBtn");
 const submitColor = document.getElementById("submitColor");
 const colorInput = document.getElementById("colorInput");
 const clapStatus = document.getElementById("clapStatus");
-const timeDisplay = document.getElementById("timeDisplay");
 
 let audioContext, micStream, analyser, dataArray;
-const targetColor = '#00ff66'; 
+const targetColor = '#00ff66'; 
 let animationFrameId;
 
 function sendLevelEmail(levelNumber) {
-  emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
-    level: levelNumber,
-    player: "Anonymous",
-    date: new Date().toLocaleString()
-  }).then(
-    response => console.log("Email sent for level " + levelNumber),
-    error => console.error("Email error:", error)
-  );
-}
-
-// Function to get the current rounded hour (12-hour format)
-function getRoundedHour() {
-  const now = new Date();
-  const hour = now.getHours();
-  const roundedHour = hour % 12 || 12; // Convert to 12-hour format, 0 becomes 12
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  return `${roundedHour}:00 ${ampm}`;
+  emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+    level: levelNumber,
+    player: "Anonymous",
+    date: new Date().toLocaleString()
+  }).then(
+    response => console.log("Email sent for level " + levelNumber),
+    error => console.error("Email error:", error)
+  );
 }
 
 // --- Level 1 ---
 startBtn.onclick = () => {
-  l1.classList.add("hidden");
-  l2.classList.remove("hidden");
-  // Email removed for level 1
+  l1.classList.add("hidden");
+  l2.classList.remove("hidden");
+
 };
 
 // --- Level 2 ---
 micBtn.onclick = async () => {
-  try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const source = audioContext.createMediaStreamSource(micStream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 512;
-    dataArray = new Uint8Array(analyser.fftSize);
-    source.connect(analyser);
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioContext.createMediaStreamSource(micStream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 512;
+    dataArray = new Uint8Array(analyser.fftSize);
+    source.connect(analyser);
 
-    micBtn.classList.add("hidden");
-    continueBtn.classList.remove("hidden");
-  } catch (err) {
-    console.error(err);
-    alert("Microphone access denied or unavailable.");
-  }
+    micBtn.classList.add("hidden");
+    continueBtn.classList.remove("hidden");
+  } catch (err) {
+    console.error(err);
+    alert("Microphone access denied or unavailable.");
+  }
 };
 
 continueBtn.onclick = () => {
-  l2.classList.add("hidden");
-  l3.classList.remove("hidden");
-  colorInput.focus();
-  // Email removed for level 2
+  l2.classList.add("hidden");
+  l3.classList.remove("hidden");
+  colorInput.focus();
+
 };
 
 // --- Level 3 ---
 submitColor.onclick = () => {
-  const guess = colorInput.value.trim();
-  const normalized = guess.startsWith('#') ? guess : '#' + guess;
-  if (normalized.toLowerCase() === targetColor.toLowerCase()) {
-    l3.classList.add("hidden");
-    l4.classList.remove("hidden");
-    sendLevelEmail(3); // send email after level 3
-    startClapDetection();
-  } 
-  // Removed alert for wrong color
+  const guess = colorInput.value.trim();
+  const normalized = guess.startsWith('#') ? guess : '#' + guess;
+  if (normalized.toLowerCase() === targetColor.toLowerCase()) {
+    l3.classList.add("hidden");
+    l4.classList.remove("hidden");
+    sendLevelEmail(3); // send email after level 3
+    startClapDetection();
+
 };
 
 // --- Level 4: Clap Detection ---
 function startClapDetection() {
-  if (!analyser) return;
+  if (!analyser) return;
 
-  let lastClapTime = 0;
-  const doubleClapInterval = 600;
-  const debounceTime = 250;
-  let clapSequenceStartTime = 0;
-  let clapsInSequence = 0;
+  let lastClapTime = 0;
+  const doubleClapInterval = 600;
+  const debounceTime = 250;
+  let clapSequenceStartTime = 0;
+  let clapsInSequence = 0;
 
-  const threshold = 0.35;      // reduced threshold
-  const spikeMultiplier = 2.2; // slightly more sensitive
-  let peakHistory = [];
+  const threshold = 0.42;
+  const spikeMultiplier = 2.5;
+  let peakHistory = [];
 
-  function detectClap() {
-    analyser.getByteTimeDomainData(dataArray);
-    let sum = 0, peak = 0;
-    for (let i=0;i<dataArray.length;i++){
-      const v=(dataArray[i]-128)/128;
-      sum+=v*v;
-      peak=Math.max(peak,Math.abs(v));
-    }
-    const rms=Math.sqrt(sum/dataArray.length);
-    const now=Date.now();
+  function detectClap() {
+    analyser.getByteTimeDomainData(dataArray);
+    let sum = 0, peak = 0;
+    for (let i=0;i<dataArray.length;i++){
+      const v=(dataArray[i]-128)/128;
+      sum+=v*v;
+      peak=Math.max(peak,Math.abs(v));
+    }
+    const rms=Math.sqrt(sum/dataArray.length);
+    const now=Date.now();
 
-    peakHistory.push(peak);
-    if (peakHistory.length>5) peakHistory.shift();
-    const avgPeak = peakHistory.reduce((a,b)=>a+b,0)/peakHistory.length;
-    const isSuddenSpike = peak>avgPeak*spikeMultiplier;
+    peakHistory.push(peak);
+    if (peakHistory.length>5) peakHistory.shift();
+    const avgPeak = peakHistory.reduce((a,b)=>a+b,0)/peakHistory.length;
+    const isSuddenSpike = peak>avgPeak*spikeMultiplier;
 
-    if (rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime) {
-      lastClapTime=now;
-      if(clapsInSequence===0){
-        clapsInSequence=1;
-        clapSequenceStartTime=now;
-        clapStatus.textContent="👏 Detected first peak. Get ready for the second...";
-      } else if(clapsInSequence===1){
-        if(now-clapSequenceStartTime<=doubleClapInterval){
-          clapsInSequence=2;
-          clapStatus.textContent="✅ Correct Answer! Proceeding...";
-          cancelAnimationFrame(animationFrameId);
-          sendLevelEmail(4); // send email after level 4
-          setTimeout(()=>{
-            l4.classList.add("hidden");
-            l5.classList.remove("hidden");
-            timeDisplay.textContent = `The current rounded hour is: ${getRoundedHour()}`;
-            sendLevelEmail(5); // send email after final level
-          },500);
-          return;
-        } else {
-          clapsInSequence=1;
-          clapSequenceStartTime=now;
-          clapStatus.textContent="👏 Too slow! First peak detected again. Try quicker!";
-        }
-      }
-    }
+    if (rms>threshold && isSuddenSpike && now-lastClapTime>debounceTime) {
+      lastClapTime=now;
+      if(clapsInSequence===0){
+        clapsInSequence=1;
+        clapSequenceStartTime=now;
+        clapStatus.textContent="👏 First clap detected! Clap again quickly...";
+      } else if(clapsInSequence===1){
+        if(now-clapSequenceStartTime<=doubleClapInterval){
+          clapsInSequence=2;
+          clapStatus.textContent="🎉 Double clap detected! Level passed!";
+          cancelAnimationFrame(animationFrameId);
+          sendLevelEmail(4); // send email after level 4
+          setTimeout(()=>{
+            l4.classList.add("hidden");
+            l5.classList.remove("hidden");
+            sendLevelEmail(5); // send email after final level
+          },500);
+          return;
+        } else {
+          clapsInSequence=1;
+          clapSequenceStartTime=now;
+          clapStatus.textContent="👏 Too slow! First clap detected again. Clap quickly!";
+        }
+      }
+    }
 
-    if(clapsInSequence===1 && now-clapSequenceStartTime>doubleClapInterval){
-      clapsInSequence=0;
-      clapSequenceStartTime=0;
-      clapStatus.textContent="A double clap will unlock the next level.";
-    }
+    if(clapsInSequence===1 && now-clapSequenceStartTime>doubleClapInterval){
+      clapsInSequence=0;
+      clapSequenceStartTime=0;
+      clapStatus.textContent="A double clap will unlock the next level.";
+    }
 
-    if(clapsInSequence!==2){
-      animationFrameId=requestAnimationFrame(detectClap);
-    }
-  }
+    if(clapsInSequence!==2){
+      animationFrameId=requestAnimationFrame(detectClap);
+    }
+  }
 
-  detectClap();
+  detectClap();
 }
 
 </script>
