@@ -94,7 +94,7 @@
 <div id="level5" class="hidden">
   <img id="level5Image" src="" alt="Level 5 Image">
   <div style="margin-top:20px;">
-    <input id="secretInput" placeholder="Type the secret word..." />
+    <input id="secretInput" placeholder="" />
     <button id="checkSecret">Submit</button>
   </div>
   <p id="secretMessage" style="font-weight:bold;margin-top:10px;"></p>
@@ -201,7 +201,7 @@ submitColor.onclick = () => {
   }
 };
 
-// --- Level 4: Clap Detection ---
+// --- Level 4:  ---
 function startClapDetection() {
   if (!analyser) return;
 
@@ -268,7 +268,7 @@ function startClapDetection() {
   detectClap();
 }
 
-// --- Level 5: Image switching every 10 minutes ---
+// --- Level 5:  ---
 function updateLevel5Image() {
   const now = new Date();
   const minute = now.getMinutes();
