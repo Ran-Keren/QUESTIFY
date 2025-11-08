@@ -80,7 +80,6 @@
     Tribute and reverence choreograph the way
   </h2>
   <p id="clapStatus"></p>
-  <div id="photoPlaceholder" style="margin-top:20px; font-size:2rem; font-weight:bold;"></div>
 </div>
 
 <!-- Level 5 -->
@@ -106,7 +105,6 @@ const continueBtn = document.getElementById("continueBtn");
 const submitColor = document.getElementById("submitColor");
 const colorInput = document.getElementById("colorInput");
 const clapStatus = document.getElementById("clapStatus");
-const photoPlaceholder = document.getElementById("photoPlaceholder");
 
 let audioContext, micStream, analyser, dataArray;
 let animationFrameId;
@@ -214,16 +212,20 @@ function startClapDetection() {
           clapStatus.textContent="👏 Clap detected!";
           cancelAnimationFrame(animationFrameId);
 
-          // Display the "photo" - current hour
-          const hour = new Date().getHours();
-          photoPlaceholder.textContent = "🖼 Hour: " + hour;
-
-          sendLevelEmail(4);
-
-          // Wait 2 seconds then go to Level 5
+          // Wait 2 seconds then go to Level 5 and display the "photo"
           setTimeout(()=>{
             l4.classList.add("hidden");
             l5.classList.remove("hidden");
+
+            // Create a photo placeholder inside Level 5
+            const photoInLevel5 = document.createElement("div");
+            photoInLevel5.style.fontSize = "2rem";
+            photoInLevel5.style.fontWeight = "bold";
+            photoInLevel5.style.marginTop = "20px";
+            const hour = new Date().getHours();
+            photoInLevel5.textContent = "🖼 Hour: " + hour;
+            l5.appendChild(photoInLevel5);
+
             sendLevelEmail(5);
           }, 2000);
 
