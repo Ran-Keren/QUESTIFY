@@ -83,7 +83,6 @@ input { font-size:1.2rem; padding:10px; border-radius:10px; border:2px solid #33
 <!-- Level 6 -->
 <div id="level6" class="hidden">
     <h2>Level 6: Modulo Riddle</h2>
-    <button id="generateMod">Generate New Prime Modulo</button>
     <p>Enter a number of at least 4 digits:</p>
     <input id="modInput" placeholder="Your number" />
     <button id="checkMod">Check Modulo</button>
@@ -130,7 +129,6 @@ const secretInput = document.getElementById("secretInput");
 const checkSecret = document.getElementById("checkSecret");
 const secretMessage = document.getElementById("secretMessage");
 
-const generateMod = document.getElementById("generateMod");
 const modInput = document.getElementById("modInput");
 const checkMod = document.getElementById("checkMod");
 const modResult = document.getElementById("modResult");
@@ -139,6 +137,7 @@ const submitModGuess = document.getElementById("submitModGuess");
 const modGuessMessage = document.getElementById("modGuessMessage");
 
 let audioContext, micStream, analyser, dataArray, animationFrameId;
+let secretMod;
 
 const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
 
@@ -296,42 +295,40 @@ checkSecret.onclick = () => {
     }
 };
 
-// ---------- Level 6 ----------
-
-<div id="level6" class="hidden">
-    <h2>Level 6: Modulo Riddle</h2>
-    <p>Enter a number of at least 4 digits:</p>
-    <input id="modInput" placeholder="Your number" />
-    <button id="checkMod">Check Modulo</button>
-    <p id="modResult" style="margin-top:10px; font-weight:bold;"></p>
-    <p>Guess the secret modulo number:</p>
-    <input id="modGuess" placeholder="Your guess" />
-    <button id="submitModGuess">Submit Guess</button>
-    <p id="modGuessMessage" style="font-weight:bold;margin-top:10px;"></p>
-</div>
-
-<script>
-let secretMod;
-
+// ---------- Level 6: Modulo Riddle ----------
 function generateRandomPrimeUnder1000() {
     const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,541,547,557,563,569,571,577,587,593,599,601,607,613,617,619,631,641,643,647,653,659,661,673,677,683,691,701,709,719,727,733,739,743,751,757,761,769,773,787,797,809,811,821,823,827,829,839,853,857,859,863,877,881,883,887,907,911,919,929,937,941,947,953,967,971,977,983,991,997];
     return primes[Math.floor(Math.random() * primes.length)];
 }
 
 checkMod.onclick = () => {
-    // Generate a new secret modulo every time
-    secretMod = generateRandomPrimeUnder1000();
-    
+    secretMod = generateRandomPrimeUnder1000(); // generate new secret each check
     const val = parseInt(modInput.value.trim());
     if (!isNaN(val) && val >= 1000) {
-        modResult.textContent = val; // display only the number
-        modGuess.value = "";         // reset guess input
-        document.getElementById('modReminder').textContent = "Reminder: Secret modulo is " + secretMod; // update level 7 reminder
+        modResult.textContent = val; // show only the number
+        modGuess.value = "";         // reset guess
+        document.getElementById('modReminder').textContent = "Reminder: Secret modulo is " + secretMod;
     } else {
-        modResult.textContent = ""; // clear result if invalid
+        modResult.textContent = "";
     }
 };
-    
+
+submitModGuess.onclick = () => {
+    const guess = parseInt(modGuess.value.trim());
+    if (guess === secretMod) {
+        modGuessMessage.textContent = "✅ Correct! Moving to Level 7...";
+        modGuessMessage.style.color = "green";
+        setTimeout(() => {
+            l6.classList.add("hidden");
+            l7.classList.remove("hidden");
+            sendLevelEmail(7);
+        }, 1000);
+    } else {
+        modGuessMessage.textContent = "Try again.";
+        modGuessMessage.style.color = "red";
+    }
+};
+
 // ---------- deterrent measures ----------
 const deterrentNotice = document.createElement('div');
 deterrentNotice.style.position='fixed';
