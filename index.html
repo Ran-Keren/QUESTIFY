@@ -42,35 +42,30 @@ input { font-size:1.2rem; padding:10px; border-radius:10px; border:2px solid #33
 </head>
 <body>
 
-<!-- Level 1 -->
 <div id="level1">
     <img id="logo" src="https://i.imgur.com/vl6pcuM.png" alt="Questify Logo">
     <button id="startBtn">Let's Start</button>
 </div>
 
-<!-- Level 2 -->
 <div id="level2" class="hidden">
     <h2>Rules</h2>
-    <p>1. You can use whatever you want.<br>
-       2. You can't ask me for help.<br>
+    <p>1. You can use whatever you want.<br><br>
+       2. You can't ask me for help.<br><br>
        3. There is no time limit.</p>
     <button id="micBtn">Allow Microphone</button>
     <button id="continueBtn" class="hidden">Start</button>
 </div>
 
-<!-- Level 3 -->
 <div id="level3" class="hidden">
     <input id="colorInput" type="text" placeholder="" />
     <button id="submitColor">Submit</button>
 </div>
 
-<!-- Level 4 -->
 <div id="level4" class="hidden">
     <h2 id="riddleText"> I abide in stillness, poised for the fleeting instant, Elation ripples through the unseen ether, Tribute and reverence choreograph the way </h2>
     <p id="clapStatus"></p>
 </div>
 
-<!-- Level 5 -->
 <div id="level5" class="hidden">
     <img id="level5Image" src="" alt="Level 5 Image">
     <div style="margin-top:20px;">
@@ -80,7 +75,6 @@ input { font-size:1.2rem; padding:10px; border-radius:10px; border:2px solid #33
     <p id="secretMessage" style="font-weight:bold;margin-top:10px;"></p>
 </div>
 
-<!-- Level 6 -->
 <div id="level6" class="hidden">
     <h2>Level 6: Modulo Riddle</h2>
     <p>Enter a number of at least 4 digits:</p>
@@ -93,13 +87,11 @@ input { font-size:1.2rem; padding:10px; border-radius:10px; border:2px solid #33
     <p id="modGuessMessage" style="font-weight:bold;margin-top:10px;"></p>
 </div>
 
-<!-- Level 7 -->
 <div id="level7" class="hidden">
     <h2>Level 7: To Be Continued...</h2>
     <p>The adventure continues in the next chapter!</p>
 </div>
 
-<!-- EmailJS SDK -->
 <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
 (function(){ emailjs.init("YOUR_USER_ID"); })();
@@ -140,6 +132,9 @@ let secretMod = generateRandomPrimeUnder1000();
 let modPressCount = 0;
 let currentLevel = 1; // prevent skipping levels
 
+// *** NEW: Initialize history state for Level 1 ***
+history.replaceState({ level: 1 }, "Level 1", "#level1");
+
 const allowedColors = ['#00ff66', '#66ff00', '#00ff00', '00ff66', '66ff00', '00ff00'];
 const level5Images = [
     "https://i.imgur.com/wIANnSO.jpeg",
@@ -159,14 +154,28 @@ function sendLevelEmail(levelNumber) {
     );
 }
 
-// --- Level navigation helper ---
+// --- Level navigation helper (UPDATED) ---
 function goToLevel(nextLevel) {
+    // Check if the jump is exactly one level up
     if (nextLevel === currentLevel + 1) {
         document.getElementById('level' + currentLevel).classList.add('hidden');
         document.getElementById('level' + nextLevel).classList.remove('hidden');
         currentLevel = nextLevel;
-    } else {
+
+        // Use history.pushState to add a new state, making forward/back buttons manageable
+        history.pushState({ level: currentLevel }, `Level ${currentLevel}`, `#level${currentLevel}`);
+        
+    } else if (nextLevel < currentLevel) {
+        // Allow manual function call for going back (e.g., from history popstate)
+        document.getElementById('level' + currentLevel).classList.add('hidden');
+        document.getElementById('level' + nextLevel).classList.remove('hidden');
+        currentLevel = nextLevel;
+    } 
+    else {
+        // Block attempts to jump forward by more than 1
         alert("You must complete the previous level first!");
+        // Ensure the UI stays on the current level
+        document.getElementById('level' + currentLevel).classList.remove('hidden');
     }
 }
 
@@ -278,6 +287,14 @@ function startClapDetection() {
 function updateLevel5Image() {
     const now = new Date();
     const minute = now.getMinutes();
+    // The original logic uses (minute % 40) / 10 % 4 which means:
+    // 0-9 min: index 0
+    // 10-19 min: index 1
+    // 20-29 min: index 2
+    // 30-39 min: index 3
+    // 40-59 min: (40-59 % 40) / 10 % 4 = (0-19) / 10 % 4 -> 0 or 1.
+    // I will simplify the logic to just rotate every 15 minutes for clarity, or keep the original.
+    // Keeping the original logic as-is:
     const index = Math.floor((minute % 40) / 10) % 4;
     level5Image.src = level5Images[index];
 }
@@ -334,7 +351,26 @@ submitModGuess.onclick = () => {
     }
 };
 
-// --- Deterrent measures ---
+// --- History Management for Back/Forward Buttons (NEW) ---
+window.addEventListener('popstate', (event) => {
+    // Get the level from the history state, default to 1 if not set
+    const targetLevel = event.state && event.state.level ? event.state.level : 1;
+    
+    // Check if the user is trying to jump forward to a level they haven't reached
+    if (targetLevel > currentLevel) {
+        // This is an attempt to use the forward button to skip a level. Block it.
+        // Pushing the current state back effectively neutralizes the forward jump.
+        history.pushState({ level: currentLevel }, `Level ${currentLevel}`, `#level${currentLevel}`);
+        showDeterrentMessage('Level skipping is not allowed!');
+    } else {
+        // If the target level is the current level or a previous one, allow the navigation.
+        // We use the less strict goToLevel here to handle the UI change
+        // but avoid re-triggering the full completion logic (like emails).
+        goToLevel(targetLevel);
+    }
+});
+
+// --- Deterrent measures (existing) ---
 const deterrentNotice = document.createElement('div');
 deterrentNotice.style.position='fixed';
 deterrentNotice.style.bottom='20px';
