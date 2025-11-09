@@ -320,26 +320,18 @@ function generateRandomPrimeUnder1000() {
     return primes[Math.floor(Math.random() * primes.length)];
 }
 
-let secretMod = generateRandomPrimeUnder1000();
-let lastEnteredNumber = null;
-
-checkMod.textContent = "Generate";
-
 checkMod.onclick = () => {
     if (currentLevel !== 6) return;
-
     const val = parseInt(modInput.value.trim());
     if (!isNaN(val) && val >= 1000) {
-        // If player changed the base number, generate new mod
-        if (val !== lastEnteredNumber) {
+        modPressCount++;
+        if(modPressCount >= 1){
             secretMod = generateRandomPrimeUnder1000();
-            lastEnteredNumber = val;
+            modPressCount = 0;
         }
-
-        // Always show the remainder
         const remainder = val % secretMod;
         modResult.textContent = remainder;
-
+        modGuess.value = "";
     } else {
         modResult.textContent = "";
     }
