@@ -1,105 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questify Game</title>
-    <style>
-        body {
-            background: #0f0f0f;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .container {
-            display: flex;
-            gap: 15px;
-        }
-        .square {
-            width: 60px;
-            height: 60px;
-            border: 2px solid #333;
-            border-radius: 10px;
-            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: #1a1a1a;
-        }
-        .green {
-            background-color: #2ecc71;
-            border-color: #2ecc71;
-            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
-            transform: scale(1.05);
-        }
-        /* Hidden reset for admin use: click the bottom of the screen 5 times */
-        #reset-trigger {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            height: 50px;
-            cursor: default;
-        }
-    </style>
-</head>
-<body>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-    <div class="container">
-        <div id="task_1" class="square"></div>
-        <div id="task_2" class="square"></div>
-        <div id="task_3" class="square"></div>
-        <div id="task_4" class="square"></div>
-        <div id="task_5" class="square"></div>
-    </div>
+  const firebaseConfig = { /* PASTE YOUR CONFIG FROM FIREBASE SETTINGS */ };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    <div id="reset-trigger" onclick="adminReset()"></div>
+  onValue(ref(db, 'tasks'), (snap) => {
+    const data = snap.val() || {};
+    for(let i=1; i<=5; i++) {
+      if(data['task'+i]) document.getElementById('task'+i).classList.add('green');
+    }
+  });
+</script>
+<div id="task1" class="square"></div> ```
 
-    <script>
-        // Mapping URL parameters to square IDs
-        const taskMap = {
-            'scan_qr': 'task_1',
-            'tap_nfc': 'task_2',
-            'task_3': 'task_3',
-            'task_4': 'task_4',
-            'task_5': 'task_5'
-        };
+### Step 3: The Secret Trigger Page (`complete.html`)
+This is the page your QR/NFC code will actually open. It updates the database and then immediately closes or shows a success message.
+**Copy this and save it as `complete.html`:**
+```html
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-        function initGame() {
-            const params = new URLSearchParams(window.location.search);
-            
-            // 1. Check if the URL has a completion token
-            for (const [key, squareId] of Object.entries(taskMap)) {
-                if (params.has(key)) {
-                    localStorage.setItem(squareId, 'completed');
-                }
-            }
+  const firebaseConfig = { /* SAME CONFIG AS ABOVE */ };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-            // 2. Render the state from LocalStorage
-            Object.values(taskMap).forEach(squareId => {
-                if (localStorage.getItem(squareId) === 'completed') {
-                    document.getElementById(squareId).classList.add('green');
-                }
-            });
+  const params = new URLSearchParams(window.location.search);
+  const taskId = params.get('id'); // e.g., task1
 
-            // 3. Clean the URL so the "token" isn't visible in the address bar anymore
-            if (window.location.search) {
-                const cleanUrl = window.location.origin + window.location.pathname;
-                window.history.replaceState({}, document.title, cleanUrl);
-            }
-        }
-
-        // Admin Reset Logic
-        let clickCount = 0;
-        function adminReset() {
-            clickCount++;
-            if (clickCount >= 5) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        initGame();
-    </script>
-</body>
-</html>
+  if(taskId) {
+    set(ref(db, 'tasks/' + taskId), true).then(() => {
+      document.body.innerHTML = "<h1>DONE!</h1>";
+      // Optional: window.close(); 
+    });
+  }
+</script>
