@@ -16,49 +16,47 @@
             font-family: 'Courier New', Courier, monospace; 
         }
 
-        /* Container keeps everything aligned and responsive */
         .wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 90%;
-            max-width: 450px; /* Limits overall size to keep it minimalist */
-        }
-
-        #timer { 
-            font-size: clamp(2rem, 15vw, 5rem); /* Scales with screen but stays proportional */
-            font-weight: bold; 
-            margin-bottom: 20px;
-            white-space: nowrap;
+            max-width: 450px; 
         }
 
         .grid { 
             display: flex; 
             justify-content: space-between;
-            width: 100%; /* Matches the width of the timer area */
+            width: 100%; 
             gap: 10px; 
+            margin-bottom: 20px; /* Space between squares and timer below */
         }
 
         .square { 
-            flex: 1; /* Makes squares grow/shrink together */
-            aspect-ratio: 1 / 1; /* Keeps them perfect squares */
-            border: 2px solid #888; /* Bright gray border */
+            flex: 1; 
+            aspect-ratio: 1 / 1; 
+            border: 2px solid #888; /* Bright gray */
             border-radius: 8px; 
             transition: 0.5s all ease; 
         }
 
-        /* Active State */
         .square.active { 
             background: #00ff88; 
             border-color: #00ff88; 
             box-shadow: 0 0 15px #00ff88; 
+        }
+
+        #timer { 
+            font-size: clamp(2rem, 15vw, 5rem); 
+            font-weight: bold; 
+            white-space: nowrap;
+            line-height: 1;
         }
     </style>
 </head>
 <body>
 
     <div class="wrapper">
-        <div id="timer">00:00:00</div>
         <div class="grid">
             <div class="square" id="sq1"></div>
             <div class="square" id="sq2"></div>
@@ -66,6 +64,8 @@
             <div class="square" id="sq4"></div>
             <div class="square" id="sq5"></div>
         </div>
+
+        <div id="timer">00:00:00</div>
     </div>
 
     <script type="module">
@@ -96,7 +96,10 @@
         });
 
         setInterval(() => {
-            if (startTime === 0) return;
+            if (startTime === 0) {
+                document.getElementById('timer').innerText = "00:00:00";
+                return;
+            }
             const diff = Date.now() - startTime;
             const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
             const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
