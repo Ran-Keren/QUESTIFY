@@ -3,21 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questify</title>
+    <title>Questify Timer</title>
     <style>
-        body { background: #0a0a0a; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; gap: 20px; font-family: sans-serif; }
-        .square { width: 70px; height: 70px; border: 2px solid #222; border-radius: 15px; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        /* The Green State */
-        .active { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 25px rgba(0, 255, 136, 0.6); transform: scale(1.05); }
+        body { background: #0a0a0a; color: #00ff88; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Courier New', Courier, monospace; }
+        #timer { font-size: 5rem; font-weight: bold; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
+        #label { font-size: 1.2rem; color: #555; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
-    <div class="square" id="sq1"></div>
-    <div class="square" id="sq2"></div>
-    <div class="square" id="sq3"></div>
-    <div class="square" id="sq4"></div>
-    <div class="square" id="sq5"></div>
+    <div id="label">Time Since Activation</div>
+    <div id="timer">00:00:00</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -29,22 +25,32 @@
             databaseURL: "https://questify-3c0d7-default-rtdb.firebaseio.com",
             projectId: "questify-3c0d7",
             storageBucket: "questify-3c0d7.firebasestorage.app",
-            messagingSenderId: "376123638900",
             appId: "1:376123638900:web:f1bc6238df32b499cf3d21"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        let startTime = null;
 
-        onValue(ref(db, 'squares'), (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                for (let i = 1; i <= 5; i++) {
-                    const el = document.getElementById(`sq${i}`);
-                    data[i] === true ? el.classList.add('active') : el.classList.remove('active');
-                }
-            }
+        // Listen for the start time from Firebase
+        onValue(ref(db, 'startTime'), (snapshot) => {
+            startTime = snapshot.val();
         });
+
+        // Update the display every second
+        setInterval(() => {
+            if (!startTime || startTime === 0) return;
+
+            const now = Date.now();
+            const diff = now - startTime;
+
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+
+            document.getElementById('timer').innerText = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
     </script>
 </body>
 </html>
