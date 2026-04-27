@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Reset</title>
-    <style>body { background: #000; margin: 0; }</style>
+    <style>body { background: #000; margin: 0; overflow: hidden; }</style>
 </head>
 <body>
     <script type="module">
@@ -22,8 +22,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        async function silentReset() {
+        async function performReset() {
             try {
+                // Wipe data silently
                 await set(ref(db), {
                     startTime: 0,
                     squares: {
@@ -34,14 +35,15 @@
                         "5": false
                     }
                 });
-                // Redirects to main page immediately after reset is successful
+                
+                // Immediately go back to the main screen
                 window.location.href = "index.html";
-            } catch (e) {
-                console.error(e);
+            } catch (error) {
+                console.error("Reset failed", error);
             }
         }
 
-        silentReset();
+        performReset();
     </script>
 </body>
 </html>
