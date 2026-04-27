@@ -5,22 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Questify</title>
     <style>
-        body { background: #000; color: #00ff88; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: monospace; }
-        #timer { font-size: 8rem; font-weight: bold; margin-bottom: 40px; }
-        .grid { display: flex; gap: 20px; }
-        .square { width: 60px; height: 60px; border: 2px solid #222; border-radius: 10px; transition: 0.5s; }
-        .active { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 20px #00ff88; }
+        body { 
+            background: #000; 
+            color: #00ff88; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            font-family: 'Courier New', Courier, monospace; 
+        }
+
+        /* Container keeps everything aligned and responsive */
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 450px; /* Limits overall size to keep it minimalist */
+        }
+
+        #timer { 
+            font-size: clamp(2rem, 15vw, 5rem); /* Scales with screen but stays proportional */
+            font-weight: bold; 
+            margin-bottom: 20px;
+            white-space: nowrap;
+        }
+
+        .grid { 
+            display: flex; 
+            justify-content: space-between;
+            width: 100%; /* Matches the width of the timer area */
+            gap: 10px; 
+        }
+
+        .square { 
+            flex: 1; /* Makes squares grow/shrink together */
+            aspect-ratio: 1 / 1; /* Keeps them perfect squares */
+            border: 2px solid #888; /* Bright gray border */
+            border-radius: 8px; 
+            transition: 0.5s all ease; 
+        }
+
+        /* Active State */
+        .square.active { 
+            background: #00ff88; 
+            border-color: #00ff88; 
+            box-shadow: 0 0 15px #00ff88; 
+        }
     </style>
 </head>
 <body>
 
-    <div id="timer">00:00:00</div>
-    <div class="grid">
-        <div class="square" id="sq1"></div>
-        <div class="square" id="sq2"></div>
-        <div class="square" id="sq3"></div>
-        <div class="square" id="sq4"></div>
-        <div class="square" id="sq5"></div>
+    <div class="wrapper">
+        <div id="timer">00:00:00</div>
+        <div class="grid">
+            <div class="square" id="sq1"></div>
+            <div class="square" id="sq2"></div>
+            <div class="square" id="sq3"></div>
+            <div class="square" id="sq4"></div>
+            <div class="square" id="sq5"></div>
+        </div>
     </div>
 
     <script type="module">
@@ -43,11 +88,7 @@
         onValue(ref(db), (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
-            
-            // Update Timer Reference
             startTime = data.startTime || 0;
-
-            // Update Squares
             for (let i = 1; i <= 5; i++) {
                 const el = document.getElementById(`sq${i}`);
                 data.squares && data.squares[i] === true ? el.classList.add('active') : el.classList.remove('active');
