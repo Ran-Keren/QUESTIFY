@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html>
-<head><title>Updating...</title></head>
-<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh;">
-    <p id="status">Scanning...</p>
+<head>
+    <title>Questify Trigger</title>
+    <style>
+        body { background: #000; color: #00ff88; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; text-align: center; }
+        .unlocked { font-size: 2rem; border: 2px solid #00ff88; padding: 20px; border-radius: 10px; animation: glow 1.5s infinite alternate; }
+        @keyframes glow { from { box-shadow: 0 0 10px #00ff88; } to { box-shadow: 0 0 30px #00ff88; } }
+    </style>
+</head>
+<body>
+    <div class="unlocked" id="msg">SCANNING...</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
@@ -14,23 +21,18 @@
             databaseURL: "https://questify-3c0d7-default-rtdb.firebaseio.com",
             projectId: "questify-3c0d7",
             storageBucket: "questify-3c0d7.firebasestorage.app",
-            messagingSenderId: "376123638900",
             appId: "1:376123638900:web:f1bc6238df32b499cf3d21"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const squareId = urlParams.get('id');
-
-        if (squareId) {
-            set(ref(db, 'squares/' + squareId), true)
-                .then(() => {
-                    document.getElementById('status').innerText = "Square " + squareId + " Active!";
-                    setTimeout(() => window.location.href = "index.html", 1000);
-                });
-        }
+        // Update the startTime to NOW (using Firebase Server Time)
+        // This ensures the timer starts for everyone at the exact same moment
+        set(ref(db, 'startTime'), Date.now())
+            .then(() => {
+                document.getElementById('msg').innerText = "ACHIEVEMENT UNLOCKED";
+            });
     </script>
 </body>
 </html>
