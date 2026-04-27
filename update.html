@@ -1,24 +1,34 @@
 <!DOCTYPE html>
 <html>
-<body>
+<head><title>Updating...</title></head>
+<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh;">
+    <p id="status">Scanning...</p>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const firebaseConfig = { /* PASTE SAME CONFIG HERE */ };
+        const firebaseConfig = {
+            apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
+            authDomain: "questify-3c0d7.firebaseapp.com",
+            databaseURL: "https://questify-3c0d7-default-rtdb.firebaseio.com",
+            projectId: "questify-3c0d7",
+            storageBucket: "questify-3c0d7.firebasestorage.app",
+            messagingSenderId: "376123638900",
+            appId: "1:376123638900:web:f1bc6238df32b499cf3d21"
+        };
+
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Get the square ID from the URL (e.g., update.html?id=1)
         const urlParams = new URLSearchParams(window.location.search);
         const squareId = urlParams.get('id');
 
         if (squareId) {
             set(ref(db, 'squares/' + squareId), true)
                 .then(() => {
-                    document.body.innerHTML = "<h1>Square " + squareId + " Updated!</h1>";
-                    // Optional: redirect back to main page after 2 seconds
-                    setTimeout(() => window.location.href = "index.html", 2000);
+                    document.getElementById('status').innerText = "Square " + squareId + " Active!";
+                    setTimeout(() => window.location.href = "index.html", 1000);
                 });
         }
     </script>
