@@ -1,39 +1,120 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
-
-  const firebaseConfig = { /* PASTE YOUR CONFIG FROM FIREBASE SETTINGS */ };
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  onValue(ref(db, 'tasks'), (snap) => {
-    const data = snap.val() || {};
-    for(let i=1; i<=5; i++) {
-      if(data['task'+i]) document.getElementById('task'+i).classList.add('green');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUESTIFY</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
     }
-  });
-</script>
-<div id="task1" class="square"></div> ```
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      letter-spacing: 4px;
+      font-weight: 300;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr); /* Change to 4, 6, 8 etc. as you like */
+      gap: 12px;
+      max-width: 600px;
+      padding: 20px;
+    }
+    .square {
+      width: 80px;
+      height: 80px;
+      background: #1f1f1f;
+      border: 2px solid #333;
+      border-radius: 8px;
+      transition: all 0.4s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .square.green {
+      background: #00ff9d;
+      border-color: #00cc7a;
+      box-shadow: 0 0 25px #00ff9d;
+      transform: scale(1.05);
+    }
+    .info {
+      margin-top: 3rem;
+      font-size: 1rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>QUESTIFY</h1>
+  <div class="grid" id="grid"></div>
+  <div class="info">Scan the QR code or tap the NFC tag to complete quests</div>
 
-### Step 3: The Secret Trigger Page (`complete.html`)
-This is the page your QR/NFC code will actually open. It updates the database and then immediately closes or shows a success message.
-**Copy this and save it as `complete.html`:**
-```html
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-  const firebaseConfig = { /* SAME CONFIG AS ABOVE */ };
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  <script>
+    // === YOUR FIREBASE CONFIG (copy from Firebase Console) ===
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-  const params = new URLSearchParams(window.location.search);
-  const taskId = params.get('id'); // e.g., task1
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  if(taskId) {
-    set(ref(db, 'tasks/' + taskId), true).then(() => {
-      document.body.innerHTML = "<h1>DONE!</h1>";
-      // Optional: window.close(); 
+    const grid = document.getElementById('grid');
+    const numSquares = 25; // Change as needed (e.g. 16, 25, 36)
+
+    // Create squares
+    for (let i = 0; i < numSquares; i++) {
+      const square = document.createElement('div');
+      square.classList.add('square');
+      square.dataset.id = i;
+      grid.appendChild(square);
+    }
+
+    // Listen to Firebase in real-time
+    const questsRef = db.ref('quests');
+
+    questsRef.on('value', (snapshot) => {
+      const completed = snapshot.val() || {};
+      document.querySelectorAll('.square').forEach(sq => {
+        const id = parseInt(sq.dataset.id);
+        if (completed[id]) {
+          sq.classList.add('green');
+        } else {
+          sq.classList.remove('green');
+        }
+      });
     });
-  }
-</script>
+
+    // Handle URL parameter from QR/NFC scan
+    const urlParams = new URLSearchParams(window.location.search);
+    const scanId = urlParams.get('scan');
+
+    if (scanId) {
+      const id = parseInt(scanId);
+      if (!isNaN(id)) {
+        questsRef.child(id).set(true);  // Mark as completed
+        // Optional: clear the parameter so refreshing doesn't trigger again
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  </script>
+</body>
+</html>
