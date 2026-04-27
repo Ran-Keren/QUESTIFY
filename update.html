@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Questify Trigger</title>
     <style>
-        body { background: #000; color: #00ff88; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; text-align: center; }
-        .unlocked { font-size: 2rem; border: 2px solid #00ff88; padding: 20px; border-radius: 10px; animation: glow 1.5s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 10px #00ff88; } to { box-shadow: 0 0 30px #00ff88; } }
+        body { background: #000; color: #00ff88; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; font-weight: bold; text-transform: uppercase; }
+        .box { border: 3px solid #00ff88; padding: 30px; border-radius: 15px; font-size: 2rem; text-align: center; }
+        .used { color: #ff4444; border-color: #ff4444; }
     </style>
 </head>
 <body>
-    <div class="unlocked" id="msg">SCANNING...</div>
+    <div id="display" class="box" style="display:none;"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
@@ -26,13 +25,22 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const display = document.getElementById('display');
 
-        // Update the startTime to NOW (using Firebase Server Time)
-        // This ensures the timer starts for everyone at the exact same moment
-        set(ref(db, 'startTime'), Date.now())
-            .then(() => {
-                document.getElementById('msg').innerText = "ACHIEVEMENT UNLOCKED";
-            });
+        get(ref(db, 'startTime')).then((snapshot) => {
+            const currentStart = snapshot.val();
+
+            if (currentStart && currentStart > 0) {
+                // ALREADY STARTED
+                display.innerText = "ALREADY USED";
+                display.classList.add('used');
+            } else {
+                // START FIRST TIME
+                set(ref(db, 'startTime'), Date.now());
+                display.innerText = "ACHIEVEMENT UNLOCKED";
+            }
+            display.style.display = 'block';
+        });
     </script>
 </body>
 </html>
