@@ -1,41 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questify</title>
+    <title>Questify Trigger</title>
     <style>
         body { 
             background: #000; 
             color: #00ff88; 
             display: flex; 
+            flex-direction: column;
             justify-content: center; 
             align-items: center; 
             height: 100vh; 
             margin: 0; 
-            font-family: 'Courier New', Courier, monospace; 
+            font-family: sans-serif; 
+            font-weight: bold; 
+            text-transform: uppercase; 
         }
 
-        .wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 90%;
-            max-width: 450px; 
+        .unlocked-msg { 
+            font-size: 2rem; 
+            margin-bottom: 30px;
+            text-align: center;
+            animation: pulse 1.5s infinite;
         }
 
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* The grid that appears after scanning */
         .grid { 
             display: flex; 
-            justify-content: space-between;
-            width: 100%; 
+            justify-content: center;
+            width: 90%;
+            max-width: 450px; 
             gap: 10px; 
-            margin-bottom: 20px; /* Space between squares and timer below */
         }
 
         .square { 
             flex: 1; 
             aspect-ratio: 1 / 1; 
-            border: 2px solid #888; /* Bright gray */
+            border: 2px solid #888; 
             border-radius: 8px; 
             transition: 0.5s all ease; 
         }
@@ -46,31 +55,24 @@
             box-shadow: 0 0 15px #00ff88; 
         }
 
-        #timer { 
-            font-size: clamp(2rem, 15vw, 5rem); 
-            font-weight: bold; 
-            white-space: nowrap;
-            line-height: 1;
-        }
+        .used-msg { color: #ff4444; border: 2px solid #ff4444; padding: 20px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="wrapper">
-        <div class="grid">
-            <div class="square" id="sq1"></div>
-            <div class="square" id="sq2"></div>
-            <div class="square" id="sq3"></div>
-            <div class="square" id="sq4"></div>
-            <div class="square" id="sq5"></div>
-        </div>
+    <div id="status-text" class="unlocked-msg">SCANNING...</div>
 
-        <div id="timer">00:00:00</div>
+    <div class="grid" id="main-grid" style="display: none;">
+        <div class="square" id="sq1"></div>
+        <div class="square" id="sq2"></div>
+        <div class="square" id="sq3"></div>
+        <div class="square" id="sq4"></div>
+        <div class="square" id="sq5"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
@@ -83,29 +85,47 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let startTime = 0;
 
-        onValue(ref(db), (snapshot) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const squareId = urlParams.get('id');
+        const statusText = document.getElementById('status-text');
+        const grid = document.getElementById('main-grid');
+
+        // 1. Logic to update the square or show "already used"
+        if (squareId) {
+            const squareRef = ref(db, 'squares/' + squareId);
+            
+            get(squareRef).then((snapshot) => {
+                if (snapshot.val() === true) {
+                    statusText.innerText = "ALREADY USED";
+                    statusText.classList.add('used-msg');
+                    statusText.classList.remove('unlocked-msg');
+                } else {
+                    set(squareRef, true).then(() => {
+                        statusText.innerText = "ACHIEVEMENT UNLOCKED";
+                        
+                        // Start the global timer if it hasn't started yet
+                        get(ref(db, 'startTime')).then((timeSnap) => {
+                            if (!timeSnap.val() || timeSnap.val() === 0) {
+                                set(ref(db, 'startTime'), Date.now());
+                            }
+                        });
+                    });
+                }
+                grid.style.display = 'flex'; // Show squares after checking
+            });
+        }
+
+        // 2. Keep squares updated on this page too
+        onValue(ref(db, 'squares'), (snapshot) => {
             const data = snapshot.val();
-            if (!data) return;
-            startTime = data.startTime || 0;
-            for (let i = 1; i <= 5; i++) {
-                const el = document.getElementById(`sq${i}`);
-                data.squares && data.squares[i] === true ? el.classList.add('active') : el.classList.remove('active');
+            if (data) {
+                for (let i = 1; i <= 5; i++) {
+                    const el = document.getElementById(`sq${i}`);
+                    data[i] === true ? el.classList.add('active') : el.classList.remove('active');
+                }
             }
         });
-
-        setInterval(() => {
-            if (startTime === 0) {
-                document.getElementById('timer').innerText = "00:00:00";
-                return;
-            }
-            const diff = Date.now() - startTime;
-            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-            document.getElementById('timer').innerText = `${h}:${m}:${s}`;
-        }, 1000);
     </script>
 </body>
 </html>
