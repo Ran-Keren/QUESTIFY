@@ -3,17 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questify Timer</title>
+    <title>Questify</title>
     <style>
-        body { background: #0a0a0a; color: #00ff88; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Courier New', Courier, monospace; }
-        #timer { font-size: 5rem; font-weight: bold; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
-        #label { font-size: 1.2rem; color: #555; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        body { background: #000; color: #00ff88; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: monospace; }
+        #timer { font-size: 8rem; font-weight: bold; margin-bottom: 40px; }
+        .grid { display: flex; gap: 20px; }
+        .square { width: 60px; height: 60px; border: 2px solid #222; border-radius: 10px; transition: 0.5s; }
+        .active { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 20px #00ff88; }
     </style>
 </head>
 <body>
 
-    <div id="label">Time Since Activation</div>
     <div id="timer">00:00:00</div>
+    <div class="grid">
+        <div class="square" id="sq1"></div>
+        <div class="square" id="sq2"></div>
+        <div class="square" id="sq3"></div>
+        <div class="square" id="sq4"></div>
+        <div class="square" id="sq5"></div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -30,26 +38,29 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let startTime = null;
+        let startTime = 0;
 
-        // Listen for the start time from Firebase
-        onValue(ref(db, 'startTime'), (snapshot) => {
-            startTime = snapshot.val();
+        onValue(ref(db), (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+            
+            // Update Timer Reference
+            startTime = data.startTime || 0;
+
+            // Update Squares
+            for (let i = 1; i <= 5; i++) {
+                const el = document.getElementById(`sq${i}`);
+                data.squares && data.squares[i] === true ? el.classList.add('active') : el.classList.remove('active');
+            }
         });
 
-        // Update the display every second
         setInterval(() => {
-            if (!startTime || startTime === 0) return;
-
-            const now = Date.now();
-            const diff = now - startTime;
-
-            const hours = Math.floor(diff / 3600000);
-            const minutes = Math.floor((diff % 3600000) / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-
-            document.getElementById('timer').innerText = 
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            if (startTime === 0) return;
+            const diff = Date.now() - startTime;
+            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${h}:${m}:${s}`;
         }, 1000);
     </script>
 </body>
