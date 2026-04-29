@@ -3,24 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questify</title>
+    <title>Questify - Status</title>
     <style>
-        body { background: #000; color: #00ff88; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Courier New', Courier, monospace; }
-        .wrapper { display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 450px; }
-        .grid { display: flex; justify-content: space-between; width: 100%; gap: 12px; margin-bottom: 25px; }
-        .square { flex: 1; aspect-ratio: 1 / 1; border: 2px solid #888; border-radius: 10px; transition: all 0.5s ease; }
-        .square.active { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 20px #00ff88; }
-        #timer { font-size: clamp(2.3rem, 16vw, 5rem); font-weight: bold; white-space: nowrap; line-height: 1; }
+        body { background: #000; color: #00ff88; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: monospace; }
+        
+        /* Message shown during/after scan */
+        #status { font-size: 1.5rem; margin-bottom: 30px; font-weight: bold; text-align: center; transition: opacity 0.5s; }
+        
+        .wrapper { display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 400px; }
+        .grid { display: flex; width: 100%; gap: 10px; margin-bottom: 20px; }
+        .square { flex: 1; aspect-ratio: 1 / 1; border: 2px solid #444; border-radius: 8px; transition: 0.5s; }
+        .active { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 15px #00ff88; }
+        #timer { font-size: 3rem; font-weight: bold; }
+        
+        .hidden { display: none; }
+        .error-text { color: #ff4444; }
     </style>
 </head>
 <body>
-    <div class="wrapper">
+
+    <div id="status">VERIFYING SCAN...</div>
+
+    <div id="game-view" class="wrapper hidden">
         <div class="grid">
-            <div class="square" id="sq1"></div>
-            <div class="square" id="sq2"></div>
-            <div class="square" id="sq3"></div>
-            <div class="square" id="sq4"></div>
-            <div class="square" id="sq5"></div>
+            <div id="sq1" class="square"></div>
+            <div id="sq2" class="square"></div>
+            <div id="sq3" class="square"></div>
+            <div id="sq4" class="square"></div>
+            <div id="sq5" class="square"></div>
         </div>
         <div id="timer">00:00:00</div>
     </div>
@@ -40,10 +50,14 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        
+        const statusEl = document.getElementById('status');
+        const gameView = document.getElementById('game-view');
         let startTime = 0;
 
-        // MAP: Secret Code -> Physical Square ID
-        // Change these secret codes to whatever you want for your QR codes!
+        // Map secret codes to squares (matches your index.html)
         const squareMap = {
             "x9j22": "sq1",
             "p5k88": "sq2",
@@ -52,27 +66,44 @@
             "r2n99": "sq5"
         };
 
-        onValue(ref(db), (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
+        // 1. Trigger the Unlock
+        if (id) {
+            fetch(`/.netlify/functions/unlock?id=${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    // Hide the status message and show the grid/timer
+                    statusEl.classList.add('hidden');
+                    gameView.classList.remove('hidden');
+                })
+                .catch(err => {
+                    statusEl.innerText = "CONNECTION ERROR";
+                    statusEl.classList.add('error-text');
+                    console.error(err);
+                });
+        } else {
+            statusEl.innerText = "INVALID QR CODE";
+        }
 
-            startTime = data.startTime || 0;
-
-            // Reset all squares first
-            document.querySelectorAll('.square').forEach(el => el.classList.remove('active'));
-
-            // Check the 'squares' folder for our secret keys
-            if (data.squares) {
+        // 2. Real-time updates for the local view
+        onValue(ref(db), (snap) => {
+            const data = snap.val();
+            if (data) {
+                startTime = data.startTime || 0;
+                // Update squares based on the map
                 for (const [secretKey, squareId] of Object.entries(squareMap)) {
-                    if (data.squares[secretKey] === true) {
-                        document.getElementById(squareId).classList.add('active');
+                    const el = document.getElementById(squareId);
+                    if (data.squares && data.squares[secretKey] === true) {
+                        el.classList.add('active');
+                    } else {
+                        el.classList.remove('active');
                     }
                 }
             }
         });
 
+        // 3. Timer Engine
         setInterval(() => {
-            if (startTime === 0) { document.getElementById('timer').innerText = "00:00:00"; return; }
+            if (startTime === 0) return;
             const diff = Date.now() - startTime;
             const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
             const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
