@@ -5,57 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Questify</title>
     <style>
-        body { 
-            background: #000; 
-            color: #00ff88; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            font-family: 'Courier New', Courier, monospace; 
-        }
-
-        .wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 90%;
-            max-width: 450px; 
-        }
-
-        .grid { 
-            display: flex; 
-            justify-content: space-between;
-            width: 100%; 
-            gap: 12px; 
-            margin-bottom: 25px; 
-        }
-
-        .square { 
-            flex: 1; 
-            aspect-ratio: 1 / 1; 
-            border: 2px solid #888; /* Bright Gray Border */
-            border-radius: 10px; 
-            transition: all 0.5s ease; 
-        }
-
-        .square.active { 
-            background: #00ff88; 
-            border-color: #00ff88; 
-            box-shadow: 0 0 20px #00ff88; 
-        }
-
-        #timer { 
-            font-size: clamp(2.3rem, 16vw, 5rem); 
-            font-weight: bold; 
-            white-space: nowrap;
-            line-height: 1;
-        }
+        body { background: #000; color: #00ff88; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Courier New', Courier, monospace; }
+        .wrapper { display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 450px; }
+        .grid { display: flex; justify-content: space-between; width: 100%; gap: 12px; margin-bottom: 25px; }
+        .square { flex: 1; aspect-ratio: 1 / 1; border: 2px solid #888; border-radius: 10px; transition: all 0.5s ease; }
+        .square.active { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 20px #00ff88; }
+        #timer { font-size: clamp(2.3rem, 16vw, 5rem); font-weight: bold; white-space: nowrap; line-height: 1; }
     </style>
 </head>
 <body>
-
     <div class="wrapper">
         <div class="grid">
             <div class="square" id="sq1"></div>
@@ -64,7 +22,6 @@
             <div class="square" id="sq4"></div>
             <div class="square" id="sq5"></div>
         </div>
-
         <div id="timer">00:00:00</div>
     </div>
 
@@ -85,34 +42,41 @@
         const db = getDatabase(app);
         let startTime = 0;
 
-        // Listen for Real-time Updates
+        // MAP: Secret Code -> Physical Square ID
+        // Change these secret codes to whatever you want for your QR codes!
+        const squareMap = {
+            "x9j22": "sq1",
+            "p5k88": "sq2",
+            "m3q11": "sq3",
+            "v7b44": "sq4",
+            "r2n99": "sq5"
+        };
+
         onValue(ref(db), (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
 
-            // Sync startTime
             startTime = data.startTime || 0;
 
-            // Sync Squares
-            for (let i = 1; i <= 5; i++) {
-                const el = document.getElementById(`sq${i}`);
-                const isActive = data.squares && data.squares[i] === true;
-                isActive ? el.classList.add('active') : el.classList.remove('active');
+            // Reset all squares first
+            document.querySelectorAll('.square').forEach(el => el.classList.remove('active'));
+
+            // Check the 'squares' folder for our secret keys
+            if (data.squares) {
+                for (const [secretKey, squareId] of Object.entries(squareMap)) {
+                    if (data.squares[secretKey] === true) {
+                        document.getElementById(squareId).classList.add('active');
+                    }
+                }
             }
         });
 
-        // Timer Engine
         setInterval(() => {
-            if (startTime === 0) {
-                document.getElementById('timer').innerText = "00:00:00";
-                return;
-            }
-            
+            if (startTime === 0) { document.getElementById('timer').innerText = "00:00:00"; return; }
             const diff = Date.now() - startTime;
             const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
             const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
             const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-            
             document.getElementById('timer').innerText = `${h}:${m}:${s}`;
         }, 1000);
     </script>
