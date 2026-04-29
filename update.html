@@ -3,83 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update</title>
+    <title>Questify - Unlock</title>
     <style>
-        body { 
-            background: #000; 
-            color: #00ff88; 
-            display: flex; 
-            flex-direction: column;
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            font-family: monospace; 
-        }
-
-        #status { 
-            font-size: 1.5rem; 
-            margin-bottom: 30px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .grid { 
-            display: flex; 
-            width: 100%; 
-            gap: 10px; 
-            margin-bottom: 20px;
-        }
-
-        .square { 
-            flex: 1; 
-            aspect-ratio: 1 / 1; 
-            border: 2px solid #888; 
-            border-radius: 8px; 
-            transition: 0.5s; 
-        }
-
-        .active { 
-            background: #00ff88; 
-            border-color: #00ff88; 
-            box-shadow: 0 0 15px #00ff88; 
-        }
-
-        #timer { 
-            font-size: 3rem; 
-            font-weight: bold; 
-        }
-
+        body { background: #000; color: #00ff88; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: monospace; }
+        #status { font-size: 1.5rem; margin-bottom: 30px; font-weight: bold; text-align: center; }
+        .wrapper { display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 400px; }
+        .grid { display: flex; width: 100%; gap: 10px; margin-bottom: 20px; }
+        .square { flex: 1; aspect-ratio: 1 / 1; border: 2px solid #444; border-radius: 8px; transition: 0.5s; }
+        .active { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 15px #00ff88; }
+        #timer { font-size: 3rem; font-weight: bold; }
         .error-text { color: #ff4444; }
     </style>
 </head>
 <body>
 
-    <div id="status">SCANNING...</div>
+    <div id="status">INITIALIZING...</div>
 
     <div class="wrapper">
         <div class="grid">
-            <div class="square" id="sq1"></div>
-            <div class="square" id="sq2"></div>
-            <div class="square" id="sq3"></div>
-            <div class="square" id="sq4"></div>
-            <div class="square" id="sq5"></div>
+            <div id="sq1" class="square"></div>
+            <div id="sq2" class="square"></div>
+            <div id="sq3" class="square"></div>
+            <div id="sq4" class="square"></div>
+            <div id="sq5" class="square"></div>
         </div>
-
         <div id="timer">00:00:00</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
@@ -92,44 +45,45 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
         const statusEl = document.getElementById('status');
         let startTime = 0;
 
-        // 1. Handle the scan logic
+        // 1. Trigger the Unlock via Backend
         if (id) {
-            const sqRef = ref(db, 'squares/' + id);
-            get(sqRef).then((snap) => {
-                if (snap.val() === true) {
-                    statusEl.innerText = "ALREADY USED";
-                    statusEl.className = "error-text";
-                } else {
-                    set(sqRef, true).then(() => {
-                        statusEl.innerText = "ACHIEVEMENT UNLOCKED";
-                        // Start global timer if it's the first scan
-                        get(ref(db, 'startTime')).then((t) => {
-                            if (!t.val() || t.val() === 0) set(ref(db, 'startTime'), Date.now());
-                        });
-                    });
-                }
-            });
+            statusEl.innerText = "VERIFYING SCAN...";
+            fetch(`/.netlify/functions/unlock?id=${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "SUCCESS") statusEl.innerText = "ACHIEVEMENT UNLOCKED";
+                    if (data.status === "ALREADY_USED") {
+                        statusEl.innerText = "ALREADY UNLOCKED";
+                        statusEl.classList.add('error-text');
+                    }
+                })
+                .catch(err => {
+                    statusEl.innerText = "CONNECTION ERROR";
+                    console.error(err);
+                });
+        } else {
+            statusEl.innerText = "INVALID QR CODE";
         }
 
-        // 2. Listen for Real-time Updates (Squares and Timer)
+        // 2. Real-time Listener (Update UI when DB changes)
         onValue(ref(db), (snap) => {
             const data = snap.val();
             if (data) {
                 startTime = data.startTime || 0;
                 for (let i = 1; i <= 5; i++) {
                     const el = document.getElementById(`sq${i}`);
-                    data.squares && data.squares[i] === true ? el.classList.add('active') : el.classList.remove('active');
+                    const active = data.squares && data.squares[i] === true;
+                    active ? el.classList.add('active') : el.classList.remove('active');
                 }
             }
         });
 
-        // 3. Timer Engine
+        // 3. Timer Logic
         setInterval(() => {
             if (startTime === 0) return;
             const diff = Date.now() - startTime;
