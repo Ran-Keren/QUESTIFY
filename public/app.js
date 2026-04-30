@@ -14,6 +14,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 let startTime = 0;
 
+// Exact mapping to match your Firebase keys
 const squareMap = {
     "x9j22": "sq1",
     "p5k88": "sq2",
@@ -22,34 +23,45 @@ const squareMap = {
     "r2n99": "sq5"
 };
 
-// Live synchronization listener
-onValue(ref(db), (snapshot) => {
-    const data = snapshot.val();
-    if (!data) return;
+// Main logic wrapped to ensure the page is ready
+window.onload = () => {
+    const timerElement = document.getElementById('timer');
 
-    // Sync startTime - if it's deleted, it defaults to 0 until created
-    startTime = data.startTime || 0;
+    onValue(ref(db), (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
 
-    if (data.squares) {
-        Object.entries(squareMap).forEach(([secretKey, htmlId]) => {
-            const el = document.getElementById(htmlId);
-            if (el) {
-                // This updates the UI instantly when Firebase changes
-                const isActive = data.squares[secretKey] === true;
-                el.classList.toggle('active', isActive);
-            }
-        });
-    }
-});
+        // Sync startTime from root
+        startTime = data.startTime || 0;
 
-setInterval(() => {
-    if (!startTime || startTime === 0) {
-        document.getElementById('timer').innerText = "00:00:00";
-        return;
-    }
-    const diff = Date.now() - startTime;
-    const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-    const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-    const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-    document.getElementById('timer').innerText = `${h}:${m}:${s}`;
-}, 1000);
+        // Sync squares from the /squares/ folder
+        if (data.squares) {
+            Object.keys(squareMap).forEach((secretKey) => {
+                const htmlId = squareMap[secretKey];
+                const el = document.getElementById(htmlId);
+                if (el) {
+                    const isActive = data.squares[secretKey] === true;
+                    if (isActive) {
+                        el.classList.add('active');
+                    } else {
+                        el.classList.remove('active');
+                    }
+                }
+            });
+        }
+    });
+
+    // Precision Timer
+    setInterval(() => {
+        if (!timerElement || !startTime || startTime === 0) return;
+
+        const diff = Date.now() - startTime;
+        if (diff < 0) return;
+
+        const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+        
+        timerElement.innerText = `${h}:${m}:${s}`;
+    }, 1000);
+};
