@@ -28,20 +28,18 @@
             const data = snapshot.val() || {};
             
             const updates = {};
-            // Updated path to ensure synchronization with the dashboard
             updates[`/squares/${squareId}`] = true;
 
-            // If startTime is missing or 0, create it now
             if (!data.startTime || data.startTime === 0) {
                 updates['/startTime'] = Date.now();
             }
 
             await update(dbRef, updates);
             
-            // This replaces the entire screen with ONLY your text
+            // FIX: This replaces "Action Registered" with your preferred text
             document.body.innerHTML = "<h1 style='font-size: 3rem;'>Achievement Unlocked</h1>";
             
-            // Syncs the timer and squares on the web by redirecting
+            // Automatically returns to the dashboard after 1.2 seconds
             setTimeout(() => { 
                 window.location.href = "/"; 
             }, 1200);
@@ -51,6 +49,6 @@
     </script>
 </head>
 <body style="background: black; color: #00ff88; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center;">
-    <!-- Removed "Updating Questify" text from here -->
+    <!-- The body is empty so NO text appears before the script runs -->
 </body>
 </html>
