@@ -2,10 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Reset</title>
-    <style>body { background: #000; margin: 0; overflow: hidden; }</style>
+    <title>Questify - System Reset</title>
+    <style>
+        body { 
+            background: #000; 
+            color: #ff4444; 
+            font-family: 'Courier New', monospace; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0;
+            text-transform: uppercase;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 20px; border: 2px solid #ff4444; padding: 10px 20px; }
+        button { 
+            padding: 15px 30px; 
+            font-size: 1.2rem; 
+            background: #ff4444; 
+            border: none; 
+            border-radius: 4px; 
+            color: white; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+        #status { margin-top: 20px; color: #00ff88; font-size: 1.2rem; }
+    </style>
 </head>
 <body>
+    <h1>System Reset</h1>
+    <button id="resetBtn">Wipe Data & Reset Timer</button>
+    <p id="status"></p>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -15,35 +46,41 @@
             authDomain: "questify-3c0d7.firebaseapp.com",
             databaseURL: "https://questify-3c0d7-default-rtdb.firebaseio.com",
             projectId: "questify-3c0d7",
-            storageBucket: "questify-3c0d7.firebasestorage.app",
             appId: "1:376123638900:web:f1bc6238df32b499cf3d21"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        async function performReset() {
+        document.getElementById('resetBtn').onclick = async () => {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = "Processing Reset...";
+            
             try {
-                // Wipe data silently
+                // This clears the root and sets up the clean structure
                 await set(ref(db), {
                     startTime: 0,
                     squares: {
-                        "1": false,
-                        "2": false,
-                        "3": false,
-                        "4": false,
-                        "5": false
+                        "x9j22": false,
+                        "p5k88": false,
+                        "m3q11": false,
+                        "v7b44": false,
+                        "r2n99": false
                     }
                 });
                 
-                // Immediately go back to the main screen
-                window.location.href = "index.html";
-            } catch (error) {
-                console.error("Reset failed", error);
-            }
-        }
+                statusEl.innerText = "SUCCESS: ALL DATA WIPED";
+                
+                // Redirect to dashboard after 1.5 seconds
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 1500);
 
-        performReset();
+            } catch (error) {
+                statusEl.style.color = "red";
+                statusEl.innerText = "Error: " + error.message;
+            }
+        };
     </script>
 </body>
 </html>
