@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// Firebase Configuration
+// Your Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
     authDomain: "questify-3c0d7.firebaseapp.com",
@@ -15,25 +15,30 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 let startTime = 0;
 
-// Mapping secret keys to the visual squares
+// Updated Map to match your database keys (1, 2, 3, 4, 5 and v7b44)
 const squareMap = {
-    "x9j22": "sq1",
-    "p5k88": "sq2",
-    "m3q11": "sq3",
-    "v7b44": "sq4",
-    "r2n99": "sq5"
+    "1": "sq1",
+    "2": "sq2",
+    "3": "sq3",
+    "4": "sq4",
+    "5": "sq5",
+    "v7b44": "sq4" // Matches your specific database entry
 };
 
-// Listen for Real-time Updates
+// Listen for Real-time Updates from Firebase
 onValue(ref(db), (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
 
+    // Sync startTime for the timer
     startTime = data.startTime || 0;
 
-    for (const [secretKey, squareId] of Object.entries(squareMap)) {
+    // Sync Squares based on your database keys
+    for (const [key, squareId] of Object.entries(squareMap)) {
         const el = document.getElementById(squareId);
-        const isActive = data.squares && data.squares[secretKey] === true;
+        if (!el) continue;
+
+        const isActive = data.squares && data.squares[key] === true;
         
         if (isActive) {
             el.classList.add('active');
@@ -43,7 +48,7 @@ onValue(ref(db), (snapshot) => {
     }
 });
 
-// Timer logic loop
+// Timer Logic
 setInterval(() => {
     if (startTime === 0) {
         document.getElementById('timer').innerText = "00:00:00";
