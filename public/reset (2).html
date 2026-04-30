@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Questify - Reset Admin</title>
+    <style>
+        body { background: #000; color: #ff4444; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        button { padding: 20px 40px; font-size: 20px; background: #ff4444; border: none; border-radius: 5px; color: white; cursor: pointer; }
+        button:hover { background: #cc0000; }
+    </style>
+</head>
+<body>
+    <h1>SYSTEM RESET</h1>
+    <button id="resetBtn">RESET ALL SQUARES & TIMER</button>
+    <p id="status"></p>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
+            authDomain: "questify-3c0d7.firebaseapp.com",
+            databaseURL: "https://questify-3c0d7-default-rtdb.firebaseio.com",
+            projectId: "questify-3c0d7",
+            storageBucket: "questify-3c0d7.firebasestorage.app",
+            appId: "1:376123638900:web:f1bc6238df32b499cf3d21"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.getElementById('resetBtn').onclick = async () => {
+            try {
+                await set(ref(db), {
+                    startTime: 0,
+                    squares: {
+                        "1": false, "2": false, "3": false, "4": false, "5": false,
+                        "x9j22": false, "p5k88": false, "m3q11": false, "v7b44": false, "r2n99": false
+                    }
+                });
+                document.getElementById('status').innerText = "Reset Successful!";
+            } catch (e) {
+                document.getElementById('status').innerText = "Error: " + e.message;
+            }
+        };
+    </script>
+</body>
+</html>
