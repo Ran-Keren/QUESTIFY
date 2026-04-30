@@ -22,17 +22,21 @@ const squareMap = {
     "r2n99": "sq5"
 };
 
+// This function listens for CHANGES in the database in real-time
 onValue(ref(db), (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
 
+    // 1. Sync Timer Data
     startTime = data.startTime || 0;
 
+    // 2. Sync Squares Data
     if (data.squares) {
         Object.entries(squareMap).forEach(([secretKey, htmlId]) => {
             const el = document.getElementById(htmlId);
             if (el) {
                 const isActive = data.squares[secretKey] === true;
+                // Instantly update the UI without reloading
                 if (isActive) {
                     el.classList.add('active');
                 } else {
@@ -43,9 +47,15 @@ onValue(ref(db), (snapshot) => {
     }
 });
 
+// The timer loop runs locally to keep the clock ticking smoothly
 setInterval(() => {
     const timerElement = document.getElementById('timer');
-    if (!timerElement || !startTime || startTime === 0) return;
+    if (!timerElement) return;
+
+    if (!startTime || startTime === 0) {
+        timerElement.innerText = "00:00:00";
+        return;
+    }
 
     const diff = Date.now() - startTime;
     const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
