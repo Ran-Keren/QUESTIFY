@@ -14,53 +14,38 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 let startTime = 0;
 
-// The mapping based on your shared DB structure
+// Mapping the secret keys from your links to the UI squares
 const squareMap = {
-    "1": "sq1",
-    "2": "sq2",
-    "3": "sq3",
-    "4": "sq4",
-    "5": "sq5",
-    "v7b44": "sq4" 
+    "x9j22": "sq1",
+    "p5k88": "sq2",
+    "m3q11": "sq3",
+    "v7b44": "sq4",
+    "r2n99": "sq5"
 };
 
-// Listen to the ROOT of the database
 onValue(ref(db), (snapshot) => {
     const data = snapshot.val();
-    console.log("Firebase Data Received:", data); // Check this in F12 Console
-
     if (!data) return;
 
-    // Set startTime from the root
     startTime = data.startTime || 0;
 
-    // Update squares
     if (data.squares) {
-        Object.entries(squareMap).forEach(([dbKey, htmlId]) => {
+        Object.entries(squareMap).forEach(([secretKey, htmlId]) => {
             const el = document.getElementById(htmlId);
             if (el) {
-                const isActive = data.squares[dbKey] === true;
-                if (isActive) el.classList.add('active');
-                else el.classList.remove('active');
+                // Check if the secret key is true in Firebase
+                const isActive = data.squares[secretKey] === true;
+                el.classList.toggle('active', isActive);
             }
         });
     }
-}, (error) => {
-    console.error("Firebase Error:", error);
 });
 
-// Timer update loop
 setInterval(() => {
     if (!startTime || startTime === 0) return;
-    
-    const now = Date.now();
-    const diff = now - startTime;
-    
-    if (diff < 0) return;
-
+    const diff = Date.now() - startTime;
     const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
     const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
     const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-    
     document.getElementById('timer').innerText = `${h}:${m}:${s}`;
 }, 1000);
