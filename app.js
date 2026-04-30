@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// Your Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
     authDomain: "questify-3c0d7.firebaseapp.com",
@@ -15,47 +14,50 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 let startTime = 0;
 
-// Updated Map to match your database keys (1, 2, 3, 4, 5 and v7b44)
+// The mapping based on your shared DB structure
 const squareMap = {
     "1": "sq1",
     "2": "sq2",
     "3": "sq3",
     "4": "sq4",
     "5": "sq5",
-    "v7b44": "sq4" // Matches your specific database entry
+    "v7b44": "sq4" 
 };
 
-// Listen for Real-time Updates from Firebase
+// Listen to the ROOT of the database
 onValue(ref(db), (snapshot) => {
     const data = snapshot.val();
+    console.log("Firebase Data Received:", data); // Check this in F12 Console
+
     if (!data) return;
 
-    // Sync startTime for the timer
+    // Set startTime from the root
     startTime = data.startTime || 0;
 
-    // Sync Squares based on your database keys
-    for (const [key, squareId] of Object.entries(squareMap)) {
-        const el = document.getElementById(squareId);
-        if (!el) continue;
-
-        const isActive = data.squares && data.squares[key] === true;
-        
-        if (isActive) {
-            el.classList.add('active');
-        } else {
-            el.classList.remove('active');
-        }
+    // Update squares
+    if (data.squares) {
+        Object.entries(squareMap).forEach(([dbKey, htmlId]) => {
+            const el = document.getElementById(htmlId);
+            if (el) {
+                const isActive = data.squares[dbKey] === true;
+                if (isActive) el.classList.add('active');
+                else el.classList.remove('active');
+            }
+        });
     }
+}, (error) => {
+    console.error("Firebase Error:", error);
 });
 
-// Timer Logic
+// Timer update loop
 setInterval(() => {
-    if (startTime === 0) {
-        document.getElementById('timer').innerText = "00:00:00";
-        return;
-    }
+    if (!startTime || startTime === 0) return;
     
-    const diff = Date.now() - startTime;
+    const now = Date.now();
+    const diff = now - startTime;
+    
+    if (diff < 0) return;
+
     const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
     const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
     const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
