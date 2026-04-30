@@ -14,7 +14,6 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 let startTime = 0;
 
-// Mapping the secret keys from your links to the UI squares
 const squareMap = {
     "x9j22": "sq1",
     "p5k88": "sq2",
@@ -23,17 +22,19 @@ const squareMap = {
     "r2n99": "sq5"
 };
 
+// Live synchronization listener
 onValue(ref(db), (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
 
+    // Sync startTime - if it's deleted, it defaults to 0 until created
     startTime = data.startTime || 0;
 
     if (data.squares) {
         Object.entries(squareMap).forEach(([secretKey, htmlId]) => {
             const el = document.getElementById(htmlId);
             if (el) {
-                // Check if the secret key is true in Firebase
+                // This updates the UI instantly when Firebase changes
                 const isActive = data.squares[secretKey] === true;
                 el.classList.toggle('active', isActive);
             }
@@ -42,7 +43,10 @@ onValue(ref(db), (snapshot) => {
 });
 
 setInterval(() => {
-    if (!startTime || startTime === 0) return;
+    if (!startTime || startTime === 0) {
+        document.getElementById('timer').innerText = "00:00:00";
+        return;
+    }
     const diff = Date.now() - startTime;
     const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
     const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
