@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport locked to prevent user scaling/zooming[cite: 4] -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Viewport settings to strictly disable scaling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Questify - Dashboard</title>
     <style>
         body { 
@@ -16,11 +16,18 @@
             margin: 0; 
             font-family: 'Courier New', Courier, monospace;
             
-            /* Prevent scrolling and browser "bounce" effects[cite: 4] */
+            /* Disable scrolling and bounce */
             overflow: hidden;
-            touch-action: none;
             position: fixed;
             width: 100%;
+            
+            /* Disable all touch manipulations including double-tap to zoom */
+            touch-action: none;
+            
+            /* Disable text selection and callouts */
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            user-select: none;
         }
 
         .wrapper {
@@ -29,8 +36,8 @@
             align-items: center;
             width: 90%;
             max-width: 450px; 
-            /* Ensure the wrapper doesn't allow scrolling[cite: 4] */
-            user-select: none;
+            /* Prevents browser handling of gestures */
+            touch-action: none;
         }
 
         .grid { 
@@ -47,9 +54,10 @@
             border: 2px solid #444; 
             border-radius: 10px; 
             transition: all 0.5s ease; 
+            /* Ensures squares don't trigger system menus on long press[cite: 4] */
+            -webkit-user-drag: none;
         }
 
-        /* Active state toggled by app.js[cite: 3, 4] */
         .square.active { 
             background: #00ff88; 
             border-color: #00ff88; 
@@ -61,13 +69,14 @@
             font-weight: bold; 
             white-space: nowrap;
             line-height: 1;
+            /* Prevents selection of the numbers[cite: 4] */
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
     <div class="wrapper">
         <div class="grid">
-            <!-- Empty divs to ensure no numbers (1-5) appear[cite: 4] -->
             <div class="square" id="sq1"></div>
             <div class="square" id="sq2"></div>
             <div class="square" id="sq3"></div>
@@ -77,7 +86,7 @@
         <div id="timer">00:00:00</div>
     </div>
 
-    <!-- Real-time synchronization logic[cite: 3, 4] -->
+    <!-- Live sync logic[cite: 3, 4] -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
