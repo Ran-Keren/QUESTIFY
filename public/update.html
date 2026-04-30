@@ -30,21 +30,21 @@
             const updates = {};
             updates[`/squares/${squareId}`] = true;
 
-            // If startTime is missing or 0, create it now
             if (!data.startTime || data.startTime === 0) {
                 updates['/startTime'] = Date.now();
             }
 
             await update(dbRef, updates);
-            document.body.innerHTML = "<h1>Action Registered</h1>";
-            // Optional: redirect back to dashboard after 1 second
-            setTimeout(() => { window.location.href = "/"; }, 1000);
+            document.body.innerHTML = "<h1 style='font-size: 3rem;'>Achievement Unlocked</h1>";
+            
+            setTimeout(() => { 
+                window.location.href = "/"; 
+            }, 1500);
         }
 
         processUpdate();
     </script>
 </head>
-<body style="background: black; color: #00ff88; font-family: monospace; text-align: center; padding-top: 50px;">
-    <h1>Updating Questify...</h1>
+<body style="background: black; color: #00ff88; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center;">
 </body>
 </html>
