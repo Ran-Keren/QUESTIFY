@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport settings to strictly disable scaling -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Questify - Dashboard</title>
     <style>
@@ -16,15 +15,13 @@
             margin: 0; 
             font-family: 'Courier New', Courier, monospace;
             
-            /* Disable scrolling and bounce */
+            /* Core locks */
             overflow: hidden;
             position: fixed;
             width: 100%;
             
-            /* Disable all touch manipulations including double-tap to zoom */
+            /* Disable native browser handling */
             touch-action: none;
-            
-            /* Disable text selection and callouts */
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             user-select: none;
@@ -36,7 +33,6 @@
             align-items: center;
             width: 90%;
             max-width: 450px; 
-            /* Prevents browser handling of gestures */
             touch-action: none;
         }
 
@@ -54,7 +50,6 @@
             border: 2px solid #444; 
             border-radius: 10px; 
             transition: all 0.5s ease; 
-            /* Ensures squares don't trigger system menus on long press[cite: 4] */
             -webkit-user-drag: none;
         }
 
@@ -69,7 +64,6 @@
             font-weight: bold; 
             white-space: nowrap;
             line-height: 1;
-            /* Prevents selection of the numbers[cite: 4] */
             pointer-events: none;
         }
     </style>
@@ -86,7 +80,25 @@
         <div id="timer">00:00:00</div>
     </div>
 
-    <!-- Live sync logic[cite: 3, 4] -->
     <script type="module" src="app.js"></script>
+
+    <script>
+        // HARD LOCK: Prevents double-tap to zoom by intercepting touchstart
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault(); // Blocks the second tap from triggering a zoom
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // EXTRA SECURITY: Disable pinch-to-zoom gestures
+        document.addEventListener('touchstart', function (event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+    </script>
 </body>
 </html>
