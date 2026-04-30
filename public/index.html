@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Viewport locked to prevent user scaling/zooming[cite: 4] -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Questify - Dashboard</title>
     <style>
         body { 
@@ -13,15 +14,25 @@
             align-items: center; 
             height: 100vh; 
             margin: 0; 
-            font-family: 'Courier New', Courier, monospace; 
+            font-family: 'Courier New', Courier, monospace;
+            
+            /* Prevent scrolling and browser "bounce" effects[cite: 4] */
+            overflow: hidden;
+            touch-action: none;
+            position: fixed;
+            width: 100%;
         }
+
         .wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 90%;
             max-width: 450px; 
+            /* Ensure the wrapper doesn't allow scrolling[cite: 4] */
+            user-select: none;
         }
+
         .grid { 
             display: flex; 
             justify-content: space-between;
@@ -29,6 +40,7 @@
             gap: 12px; 
             margin-bottom: 25px; 
         }
+
         .square { 
             flex: 1; 
             aspect-ratio: 1 / 1; 
@@ -36,11 +48,14 @@
             border-radius: 10px; 
             transition: all 0.5s ease; 
         }
+
+        /* Active state toggled by app.js[cite: 3, 4] */
         .square.active { 
             background: #00ff88; 
             border-color: #00ff88; 
             box-shadow: 0 0 20px #00ff88; 
         }
+
         #timer { 
             font-size: clamp(2.3rem, 16vw, 5rem); 
             font-weight: bold; 
@@ -52,6 +67,7 @@
 <body>
     <div class="wrapper">
         <div class="grid">
+            <!-- Empty divs to ensure no numbers (1-5) appear[cite: 4] -->
             <div class="square" id="sq1"></div>
             <div class="square" id="sq2"></div>
             <div class="square" id="sq3"></div>
@@ -61,7 +77,7 @@
         <div id="timer">00:00:00</div>
     </div>
 
-    <!-- External Logic File -->
+    <!-- Real-time synchronization logic[cite: 3, 4] -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
