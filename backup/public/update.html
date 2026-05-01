@@ -16,14 +16,17 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
         const urlParams = new URLSearchParams(window.location.search);
         const squareId = urlParams.get('id');
 
         async function processUpdate() {
             if (!squareId) return;
+
             const dbRef = ref(db);
             const snapshot = await get(dbRef);
             const data = snapshot.val() || {};
+            
             const updates = {};
             updates[`/squares/${squareId}`] = true;
 
@@ -32,14 +35,20 @@
             }
 
             await update(dbRef, updates);
+            
+            // FIX: This replaces "Action Registered" with your preferred text
             document.body.innerHTML = "<h1 style='font-size: 3rem;'>Achievement Unlocked</h1>";
             
-            // Doubled the time (2400ms) before redirecting back to dashboard[cite: 2]
-            setTimeout(() => { window.location.href = "/"; }, 2400);
+            // Automatically returns to the dashboard after 1.2 seconds
+            setTimeout(() => { 
+                window.location.href = "/"; 
+            }, 1200);
         }
+
         processUpdate();
     </script>
 </head>
-<body style="background: black; color: #00ff88; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; overflow: hidden; touch-action: none;">
+<body style="background: black; color: #00ff88; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center;">
+    <!-- The body is empty so NO text appears before the script runs -->
 </body>
 </html>

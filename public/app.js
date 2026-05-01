@@ -13,54 +13,90 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 let startTime = 0;
+let winTriggered = false;
 
 const squareMap = {
-    "x9j22": "sq1",
-    "p5k88": "sq2",
-    "m3q11": "sq3",
-    "v7b44": "sq4",
-    "r2n99": "sq5"
+    "x9j22": "sq1", "p5k88": "sq2", "m3q11": "sq3", "v7b44": "sq4", "r2n99": "sq5"
 };
 
-// This function listens for CHANGES in the database in real-time
 onValue(ref(db), (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
 
-    // 1. Sync Timer Data
     startTime = data.startTime || 0;
+    let activeCount = 0;
 
-    // 2. Sync Squares Data
     if (data.squares) {
         Object.entries(squareMap).forEach(([secretKey, htmlId]) => {
             const el = document.getElementById(htmlId);
             if (el) {
                 const isActive = data.squares[secretKey] === true;
-                // Instantly update the UI without reloading
-                if (isActive) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
+                el.classList.toggle('active', isActive);
+                if (isActive) activeCount++;
             }
         });
     }
+
+    // Solitaire Logic: If all 5 are green[cite: 3]
+    if (activeCount === 5 && !winTriggered) {
+        winTriggered = true;
+        startSolitaire();
+        setTimeout(() => {
+            window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        }, 5000); // Redirect after 5 seconds
+    }
 });
 
-// The timer loop runs locally to keep the clock ticking smoothly
-setInterval(() => {
-    const timerElement = document.getElementById('timer');
-    if (!timerElement) return;
+function startSolitaire() {
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.pointerEvents = 'none';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
 
-    if (!startTime || startTime === 0) {
-        timerElement.innerText = "00:00:00";
-        return;
+    let particles = [];
+    for (let i = 0; i < 5; i++) {
+        particles.push({
+            x: (window.innerWidth / 6) * (i + 1),
+            y: window.innerHeight / 3,
+            vx: Math.random() * 4 - 2,
+            vy: 2,
+            size: 60
+        });
     }
 
+    function animate() {
+        particles.forEach(p => {
+            ctx.fillStyle = '#00ff88';
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+            ctx.strokeStyle = '#000';
+            ctx.strokeRect(p.x, p.y, p.size, p.size);
+
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.2; // Gravity
+
+            if (p.y + p.size > window.innerHeight) {
+                p.y = window.innerHeight - p.size;
+                p.vy *= -0.8; // Bounce
+            }
+            if (p.x < 0 || p.x + p.size > window.innerWidth) p.vx *= -1;
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+}
+
+setInterval(() => {
+    const timerElement = document.getElementById('timer');
+    if (!timerElement || !startTime) return;
     const diff = Date.now() - startTime;
     const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
     const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
     const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-    
     timerElement.innerText = `${h}:${m}:${s}`;
 }, 1000);
