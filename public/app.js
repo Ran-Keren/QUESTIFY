@@ -37,13 +37,13 @@ onValue(ref(db), (snapshot) => {
         });
     }
 
-    // Solitaire Logic: If all 5 are green[cite: 3]
+    // Trigger Win Sequence
     if (activeCount === 5 && !winTriggered) {
         winTriggered = true;
         startSolitaire();
         setTimeout(() => {
             window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-        }, 5000); // Redirect after 5 seconds
+        }, 6000); 
     }
 });
 
@@ -52,6 +52,7 @@ function startSolitaire() {
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
     canvas.style.left = '0';
+    canvas.style.zIndex = '9999';
     canvas.style.pointerEvents = 'none';
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -59,31 +60,41 @@ function startSolitaire() {
     const ctx = canvas.getContext('2d');
 
     let particles = [];
-    for (let i = 0; i < 5; i++) {
+    
+    // Create origin points from actual square positions
+    Object.values(squareMap).forEach(id => {
+        const rect = document.getElementById(id).getBoundingClientRect();
         particles.push({
-            x: (window.innerWidth / 6) * (i + 1),
-            y: window.innerHeight / 3,
-            vx: Math.random() * 4 - 2,
-            vy: 2,
-            size: 60
+            x: rect.left,
+            y: rect.top,
+            vx: (Math.random() - 0.5) * 10,
+            vy: Math.random() * -5 - 5, // Initial jump up
+            size: rect.width
         });
-    }
+    });
 
     function animate() {
+        // We don't clear the whole canvas to get the "stacking" effect[cite: 3]
         particles.forEach(p => {
             ctx.fillStyle = '#00ff88';
             ctx.fillRect(p.x, p.y, p.size, p.size);
             ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
             ctx.strokeRect(p.x, p.y, p.size, p.size);
 
             p.x += p.vx;
             p.y += p.vy;
-            p.vy += 0.2; // Gravity
+            p.vy += 0.4; // Gravity
 
+            // Bounce logic for bottom of screen[cite: 3]
             if (p.y + p.size > window.innerHeight) {
                 p.y = window.innerHeight - p.size;
-                p.vy *= -0.8; // Bounce
+                p.vy *= -0.75;
+                // Add new variation after bounce
+                p.vx += (Math.random() - 0.5) * 2;
             }
+            
+            // Screen edge bounce
             if (p.x < 0 || p.x + p.size > window.innerWidth) p.vx *= -1;
         });
         requestAnimationFrame(animate);
