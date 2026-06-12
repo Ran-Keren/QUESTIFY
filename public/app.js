@@ -14,7 +14,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let startTime = 0;
-let stopTime = 0; // Stores the time when all 5 squares are active
+let stopTime = 0; 
 let winTriggered = false;
 
 const squareMap = {
@@ -43,8 +43,12 @@ onValue(ref(db), (snapshot) => {
     if (activeCount === 5 && !winTriggered) {
         winTriggered = true;
         stopTime = Date.now(); // Capture exact win time to freeze the clock
-        startSolitaire(); 
-        // Rickroll redirect removed here so the user can enjoy the animation and see their time!
+        
+        // Check if the user has already seen the animation this session (prevents it on refresh)
+        if (!sessionStorage.getItem('solitairePlayed')) {
+            sessionStorage.setItem('solitairePlayed', 'true');
+            startSolitaire(); 
+        }
     }
 });
 
@@ -67,8 +71,6 @@ function startSolitaire() {
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
     canvas.style.left = '0';
-    // Make sure the canvas sits behind the timer if the timer has a lower z-index, 
-    // or just let it overlay but keep pointer-events: none so it doesn't block clicks.
     canvas.style.zIndex = '9999'; 
     canvas.style.pointerEvents = 'none';
     canvas.width = window.innerWidth;
@@ -77,6 +79,7 @@ function startSolitaire() {
     const ctx = canvas.getContext('2d');
 
     let particles = [];
+    let animationId; // Variable to track the animation frame
     
     Object.values(squareMap).forEach(id => {
         const el = document.getElementById(id);
@@ -93,8 +96,6 @@ function startSolitaire() {
     });
 
     function animate() {
-        // Clear a slight trail or fully clear the rect if you don't want trails
-        // This current implementation just draws infinitely which gives the "solitaire" trail effect
         particles.forEach(p => {
             ctx.fillStyle = '#00ff88';
             ctx.fillRect(p.x, p.y, p.size, p.size);
@@ -116,7 +117,15 @@ function startSolitaire() {
             // Bounce off sides
             if (p.x < 0 || p.x + p.size > window.innerWidth) p.vx *= -1;
         });
-        requestAnimationFrame(animate);
+        animationId = requestAnimationFrame(animate);
     }
+    
+    // Start the animation loop
     animate();
+
+    // Kill the animation and remove the canvas after exactly 15 seconds
+    setTimeout(() => {
+        cancelAnimationFrame(animationId);
+        canvas.remove();
+    }, 15000);
 }
