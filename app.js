@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC33dWyXuymE8GG-Jgxq7KVFiolMYP7To4",
@@ -12,38 +12,57 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
 let startTime = 0;
+let stopTime = 0; 
+let winTriggered = false;
 
 const squareMap = {
-    "x9j22": "sq1",
-    "p5k88": "sq2",
-    "m3q11": "sq3",
-    "v7b44": "sq4",
-    "r2n99": "sq5"
+    "x9j22": "sq1", "p5k88": "sq2", "m3q11": "sq3", "v7b44": "sq4", "r2n99": "sq5"
 };
 
-// This function listens for CHANGES in the database in real-time
 onValue(ref(db), (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
 
-    // 1. Sync Timer Data
     startTime = data.startTime || 0;
+    
+    // Read stopTime from Firebase, force to 0 if it was deleted by the reset script
+    stopTime = data.stopTime || 0; 
+    
+    // If the game was just reset (stopTime is 0), re-arm the win trigger!
+    if (stopTime === 0) {
+        winTriggered = false;
+    }
 
-    // 2. Sync Squares Data
+    let activeCount = 0;
+
+    // Sync Squares Data
     if (data.squares) {
         Object.entries(squareMap).forEach(([secretKey, htmlId]) => {
             const el = document.getElementById(htmlId);
             if (el) {
                 const isActive = data.squares[secretKey] === true;
-                // Instantly update the UI without reloading
-                if (isActive) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
+                el.classList.toggle('active', isActive);
+                if (isActive) activeCount++;
             }
         });
+    }
+
+    // Trigger Win Sequence
+    if (activeCount === 5 && !winTriggered) {
+        winTriggered = true;
+        
+        // If stopTime is 0, this is a fresh win (not just a page refresh)
+        if (stopTime === 0) {
+            stopTime = Date.now();
+            
+            // Save the stopTime to Firebase permanently so the timer stays stopped
+            update(ref(db), { stopTime: stopTime });
+            
+            // Play the 10-second animation
+            startSolitaire(); 
+        }
     }
 });
 
@@ -56,11 +75,76 @@ setInterval(() => {
         timerElement.innerText = "00:00:00";
         return;
     }
-
-    const diff = Date.now() - startTime;
+    
+    // If stopTime exists, calculate diff from stopTime. Otherwise, use current time.
+    const now = stopTime > 0 ? stopTime : Date.now(); 
+    const diff = now - startTime;
+    
     const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
     const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
     const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
     
     timerElement.innerText = `${h}:${m}:${s}`;
 }, 1000);
+
+// --- SOLITAIRE FUNCTION ---
+function startSolitaire() {
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.zIndex = '9999'; 
+    canvas.style.pointerEvents = 'none';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    let animationId; 
+    
+    Object.values(squareMap).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            particles.push({
+                x: rect.left,
+                y: rect.top,
+                vx: (Math.random() - 0.5) * 10,
+                vy: Math.random() * -5 - 5,
+                size: rect.width
+            });
+        }
+    });
+
+    function animate() {
+        particles.forEach(p => {
+            ctx.fillStyle = '#00ff88';
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(p.x, p.y, p.size, p.size);
+
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.4; // Gravity
+
+            if (p.y + p.size > window.innerHeight) {
+                p.y = window.innerHeight - p.size;
+                p.vy *= -0.75;
+                p.vx += (Math.random() - 0.5) * 2;
+            }
+            
+            if (p.x < 0 || p.x + p.size > window.innerWidth) p.vx *= -1;
+        });
+        animationId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+
+    // Kills the animation exactly 10 seconds after it starts
+    setTimeout(() => {
+        cancelAnimationFrame(animationId);
+        canvas.remove();
+    }, 10000);
+}
