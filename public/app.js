@@ -28,13 +28,17 @@ onValue(ref(db), (snapshot) => {
 
     startTime = data.startTime || 0;
     
-    // Read stopTime from Firebase if it exists (keeps clock frozen on refresh)
-    if (data.stopTime) {
-        stopTime = data.stopTime;
+    // Read stopTime from Firebase, force to 0 if it was deleted by the reset script
+    stopTime = data.stopTime || 0; 
+    
+    // If the game was just reset (stopTime is 0), re-arm the win trigger!
+    if (stopTime === 0) {
+        winTriggered = false;
     }
 
     let activeCount = 0;
 
+    // Sync Squares Data
     if (data.squares) {
         Object.entries(squareMap).forEach(([secretKey, htmlId]) => {
             const el = document.getElementById(htmlId);
@@ -50,30 +54,37 @@ onValue(ref(db), (snapshot) => {
     if (activeCount === 5 && !winTriggered) {
         winTriggered = true;
         
-        // If stopTime is 0, this is the FIRST time they won (not a refresh)
+        // If stopTime is 0, this is a fresh win (not just a page refresh)
         if (stopTime === 0) {
             stopTime = Date.now();
             
             // Save the stopTime to Firebase permanently so the timer stays stopped
             update(ref(db), { stopTime: stopTime });
             
-            // Play the animation since it's a fresh win
+            // Play the 10-second animation
             startSolitaire(); 
         }
     }
 });
 
-// Interval uses stopTime to freeze the clock
+// The timer loop runs locally to keep the clock ticking smoothly
 setInterval(() => {
     const timerElement = document.getElementById('timer');
-    if (!timerElement || !startTime) return;
+    if (!timerElement) return;
+
+    if (!startTime || startTime === 0) {
+        timerElement.innerText = "00:00:00";
+        return;
+    }
     
+    // If stopTime exists, calculate diff from stopTime. Otherwise, use current time.
     const now = stopTime > 0 ? stopTime : Date.now(); 
     const diff = now - startTime;
     
     const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
     const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
     const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+    
     timerElement.innerText = `${h}:${m}:${s}`;
 }, 1000);
 
