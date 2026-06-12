@@ -14,7 +14,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let startTime = 0;
-let stopTime = 0; // New: Stores the time when all 5 squares are active
+let stopTime = 0; // Stores the time when all 5 squares are active
 let winTriggered = false;
 
 const squareMap = {
@@ -42,15 +42,13 @@ onValue(ref(db), (snapshot) => {
     // Trigger Win Sequence
     if (activeCount === 5 && !winTriggered) {
         winTriggered = true;
-        stopTime = Date.now(); // New: Capture exact win time
-        startSolitaire();
-        setTimeout(() => {
-            window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-        }, 6000); 
+        stopTime = Date.now(); // Capture exact win time to freeze the clock
+        startSolitaire(); 
+        // Rickroll redirect removed here so the user can enjoy the animation and see their time!
     }
 });
 
-// New: Interval uses stopTime to freeze the clock
+// Interval uses stopTime to freeze the clock
 setInterval(() => {
     const timerElement = document.getElementById('timer');
     if (!timerElement || !startTime) return;
@@ -69,7 +67,9 @@ function startSolitaire() {
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
     canvas.style.left = '0';
-    canvas.style.zIndex = '9999';
+    // Make sure the canvas sits behind the timer if the timer has a lower z-index, 
+    // or just let it overlay but keep pointer-events: none so it doesn't block clicks.
+    canvas.style.zIndex = '9999'; 
     canvas.style.pointerEvents = 'none';
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -79,17 +79,22 @@ function startSolitaire() {
     let particles = [];
     
     Object.values(squareMap).forEach(id => {
-        const rect = document.getElementById(id).getBoundingClientRect();
-        particles.push({
-            x: rect.left,
-            y: rect.top,
-            vx: (Math.random() - 0.5) * 10,
-            vy: Math.random() * -5 - 5,
-            size: rect.width
-        });
+        const el = document.getElementById(id);
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            particles.push({
+                x: rect.left,
+                y: rect.top,
+                vx: (Math.random() - 0.5) * 10,
+                vy: Math.random() * -5 - 5,
+                size: rect.width
+            });
+        }
     });
 
     function animate() {
+        // Clear a slight trail or fully clear the rect if you don't want trails
+        // This current implementation just draws infinitely which gives the "solitaire" trail effect
         particles.forEach(p => {
             ctx.fillStyle = '#00ff88';
             ctx.fillRect(p.x, p.y, p.size, p.size);
@@ -99,14 +104,16 @@ function startSolitaire() {
 
             p.x += p.vx;
             p.y += p.vy;
-            p.vy += 0.4;
+            p.vy += 0.4; // Gravity
 
+            // Bounce off bottom
             if (p.y + p.size > window.innerHeight) {
                 p.y = window.innerHeight - p.size;
                 p.vy *= -0.75;
                 p.vx += (Math.random() - 0.5) * 2;
             }
             
+            // Bounce off sides
             if (p.x < 0 || p.x + p.size > window.innerWidth) p.vx *= -1;
         });
         requestAnimationFrame(animate);
