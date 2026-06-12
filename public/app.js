@@ -12,7 +12,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
 let startTime = 0;
+let stopTime = 0; // New: Stores the time when all 5 squares are active
 let winTriggered = false;
 
 const squareMap = {
@@ -40,12 +42,27 @@ onValue(ref(db), (snapshot) => {
     // Trigger Win Sequence
     if (activeCount === 5 && !winTriggered) {
         winTriggered = true;
+        stopTime = Date.now(); // New: Capture exact win time
         startSolitaire();
         setTimeout(() => {
             window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
         }, 6000); 
     }
 });
+
+// New: Interval uses stopTime to freeze the clock
+setInterval(() => {
+    const timerElement = document.getElementById('timer');
+    if (!timerElement || !startTime) return;
+    
+    const now = stopTime > 0 ? stopTime : Date.now(); 
+    const diff = now - startTime;
+    
+    const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+    const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+    const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+    timerElement.innerText = `${h}:${m}:${s}`;
+}, 1000);
 
 function startSolitaire() {
     const canvas = document.createElement('canvas');
@@ -61,20 +78,18 @@ function startSolitaire() {
 
     let particles = [];
     
-    // Create origin points from actual square positions
     Object.values(squareMap).forEach(id => {
         const rect = document.getElementById(id).getBoundingClientRect();
         particles.push({
             x: rect.left,
             y: rect.top,
             vx: (Math.random() - 0.5) * 10,
-            vy: Math.random() * -5 - 5, // Initial jump up
+            vy: Math.random() * -5 - 5,
             size: rect.width
         });
     });
 
     function animate() {
-        // We don't clear the whole canvas to get the "stacking" effect[cite: 3]
         particles.forEach(p => {
             ctx.fillStyle = '#00ff88';
             ctx.fillRect(p.x, p.y, p.size, p.size);
@@ -84,30 +99,17 @@ function startSolitaire() {
 
             p.x += p.vx;
             p.y += p.vy;
-            p.vy += 0.4; // Gravity
+            p.vy += 0.4;
 
-            // Bounce logic for bottom of screen[cite: 3]
             if (p.y + p.size > window.innerHeight) {
                 p.y = window.innerHeight - p.size;
                 p.vy *= -0.75;
-                // Add new variation after bounce
                 p.vx += (Math.random() - 0.5) * 2;
             }
             
-            // Screen edge bounce
             if (p.x < 0 || p.x + p.size > window.innerWidth) p.vx *= -1;
         });
         requestAnimationFrame(animate);
     }
     animate();
 }
-
-setInterval(() => {
-    const timerElement = document.getElementById('timer');
-    if (!timerElement || !startTime) return;
-    const diff = Date.now() - startTime;
-    const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-    const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-    const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-    timerElement.innerText = `${h}:${m}:${s}`;
-}, 1000);
