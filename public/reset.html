@@ -29,6 +29,7 @@
 
                 // 3. Reset the core system variables to their initial state
                 await set(ref(db, 'startTime'), 0);
+                await set(ref(db, 'stopTime'), 0); // Added stopTime reset here
                 await set(ref(db, 'squares'), {
                     "x9j22": false, 
                     "p5k88": false, 
