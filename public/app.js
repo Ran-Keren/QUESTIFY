@@ -1,6 +1,5 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-// Added 'update' to the import list
 import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -29,7 +28,7 @@ onValue(ref(db), (snapshot) => {
 
     startTime = data.startTime || 0;
     
-    // Read stopTime from Firebase if it exists
+    // Read stopTime from Firebase if it exists (keeps clock frozen on refresh)
     if (data.stopTime) {
         stopTime = data.stopTime;
     }
@@ -55,15 +54,12 @@ onValue(ref(db), (snapshot) => {
         if (stopTime === 0) {
             stopTime = Date.now();
             
-            // Save the stopTime to Firebase permanently
+            // Save the stopTime to Firebase permanently so the timer stays stopped
             update(ref(db), { stopTime: stopTime });
             
             // Play the animation since it's a fresh win
             startSolitaire(); 
         }
-
-        // Show the final time on screen above all
-        showWinOverlay(stopTime - startTime);
     }
 });
 
@@ -81,49 +77,13 @@ setInterval(() => {
     timerElement.innerText = `${h}:${m}:${s}`;
 }, 1000);
 
-// --- NEW FUNCTION: Displays a permanent overlay with the final time ---
-function showWinOverlay(diff) {
-    if (document.getElementById('win-overlay')) return; // Prevent duplicates
-
-    const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-    const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-    const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-    const finalTime = `${h}:${m}:${s}`;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'win-overlay';
-    Object.assign(overlay.style, {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        color: '#00ff88',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: '10000', // Puts it above absolutely everything
-        fontFamily: 'monospace'
-    });
-
-    overlay.innerHTML = `
-        <h1 style="font-size: 3rem; margin-bottom: 10px; text-align: center;">QUEST COMPLETE!</h1>
-        <p style="font-size: 1.5rem; margin-bottom: 0;">Final Time</p>
-        <div style="font-size: 5rem; font-weight: bold; text-shadow: 0 0 20px #00ff88;">${finalTime}</div>
-    `;
-    
-    document.body.appendChild(overlay);
-}
-
 // --- SOLITAIRE FUNCTION ---
 function startSolitaire() {
     const canvas = document.createElement('canvas');
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
     canvas.style.left = '0';
-    canvas.style.zIndex = '9999'; // Sits just behind the win overlay text
+    canvas.style.zIndex = '9999'; 
     canvas.style.pointerEvents = 'none';
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -172,9 +132,9 @@ function startSolitaire() {
     
     animate();
 
-    // Kills the animation exactly 15 seconds after it starts
+    // Kills the animation exactly 10 seconds after it starts
     setTimeout(() => {
         cancelAnimationFrame(animationId);
         canvas.remove();
-    }, 15000);
+    }, 10000);
 }
