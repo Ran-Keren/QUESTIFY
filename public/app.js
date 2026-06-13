@@ -64,6 +64,11 @@ onValue(ref(db), (snapshot) => {
         // and force the local stopTime to 0 so the clock keeps ticking.
         stopTime = 0;
         winTriggered = false; 
+
+        // WIPE OLD STOP TIME FROM FIREBASE (Solitaire Fix)
+        if (data.stopTime !== 0 && data.stopTime !== undefined) {
+            update(ref(db), { stopTime: 0 });
+        }
     }
 });
 
@@ -113,7 +118,7 @@ function startSolitaire() {
                 y: rect.top,
                 vx: (Math.random() - 0.5) * 10,
                 vy: Math.random() * -5 - 5,
-                size: rect.width
+                size: rect.width || 50 // Fallback size
             });
         }
     });
@@ -149,4 +154,3 @@ function startSolitaire() {
         canvas.remove();
     }, 10000);
 }
-
