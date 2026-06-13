@@ -42,21 +42,19 @@ onValue(ref(db), (snapshot) => {
 
     // 2. CHECK WIN CONDITION & STOP TIME
     if (activeCount === 5) {
-        // Only look at the database stopTime if we actually have all 5 squares
         stopTime = data.stopTime || 0; 
 
         if (!winTriggered) {
             winTriggered = true;
             
-            // If stopTime is 0, this is the exact moment they just won
+            // 🚨 THE FIX: Play the animation for EVERY device immediately
+            // once they realize 5 squares are active, regardless of who won first.
+            startSolitaire(); 
+            
+            // ONLY the device that first spots the win gets to update the database clock
             if (stopTime === 0) {
                 stopTime = Date.now();
-                
-                // Save it to Firebase so the clock stays frozen
                 update(ref(db), { stopTime: stopTime });
-                
-                // Play the Solitaire effect
-                startSolitaire(); 
             }
         }
     } else {
@@ -65,7 +63,7 @@ onValue(ref(db), (snapshot) => {
         stopTime = 0;
         winTriggered = false; 
 
-        // WIPE OLD STOP TIME FROM FIREBASE (Solitaire Fix)
+        // WIPE OLD STOP TIME FROM FIREBASE
         if (data.stopTime !== 0 && data.stopTime !== undefined) {
             update(ref(db), { stopTime: 0 });
         }
@@ -82,7 +80,6 @@ setInterval(() => {
         return;
     }
     
-    // If stopTime > 0 (meaning you have 5 squares), it freezes. Otherwise, it uses Date.now().
     const now = stopTime > 0 ? stopTime : Date.now(); 
     const diff = now - startTime;
     
@@ -118,7 +115,7 @@ function startSolitaire() {
                 y: rect.top,
                 vx: (Math.random() - 0.5) * 10,
                 vy: Math.random() * -5 - 5,
-                size: rect.width || 50 // Fallback size
+                size: rect.width || 50 
             });
         }
     });
